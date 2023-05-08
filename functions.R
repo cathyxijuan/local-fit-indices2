@@ -430,6 +430,16 @@ count.null <- function(matrix.list){
 }
 
 
+##Purpose: remove the null matrices in a list of matrices
+##Argument: 
+#matrix.list: a list of matrix that may contain null values
+remove.null <- function(matrix.list){
+  if(sum(sapply(matrix.list, is.null))==0){
+    matrix.list
+  } else{
+    matrix.list[!(sapply(matrix.list, is.null))]
+  }
+}
 
 
 
@@ -628,4 +638,31 @@ simu.rmsea.ci <- function(pop.model, sat.model, path.model.list, sample.size, re
     }
   }
   ci.list
+}
+
+
+
+
+
+
+##Purpose: compute the coverage rate of the confidence intervals from the simulation study. 
+##Arguments:
+##### 1) pop.indices: a numeric vector that contains the population values of the fit indices.
+##### 2) ci.data.list: a list of confidence intervals from the simulation. 
+ci.coverage <- function(pop.indices, ci.data.list){
+  ci.check <- list()
+  ci.data <- remove.null(ci.data.list)
+  simu.num <- length(ci.data)
+  for(i in 1:simu.num){
+    ci <- ci.data[[i]]
+    ci.default <- ci[1,] <= pop.indices &pop.indices <=ci[2,]
+    ci.adj.str.exp <- ci[3,] <= pop.indices &pop.indices <=ci[4,]
+    ci.adj.str.exp.tri <- ci[5,] <= pop.indices &pop.indices <=ci[6,]
+    ci.check[[i]] <- rbind(ci.default,
+                           ci.adj.str.exp,
+                           ci.adj.str.exp.tri)
+  }
+  
+  list.mean(ci.check)
+  
 }
