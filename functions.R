@@ -185,15 +185,12 @@ rmsea.adj <- function(fit, gamma, structured=T, expected=T){
 ##CI in a vector:(lower.bound, upper.bound)
 rmsea.ci <- function(fit, gamma, structured=T, expected=T){
   n <- lavInspect(fit, "nobs")
-  c.adj <- c.adj.val(fit, gamma, structured, expected)
   Fmin <- lavInspect(fit, "fit")["fmin"]*2
   df <- lavInspect(fit, "fit")["df"]
-  rmsea.ci.lower <- lavInspect(fit, "fit")["rmsea.ci.lower"]
-  rmsea.ci.upper <- lavInspect(fit, "fit")["rmsea.ci.upper"]
-  fmin.ci.lower <- (rmsea.ci.lower^2 + 1/n)*df
-  fmin.ci.upper <- (rmsea.ci.upper^2 + 1/n)*df
-  rmsea.adjust.ci.lower <- sqrt(max((fmin.ci.lower- c.adj/n)/df, 0))
-  rmsea.adjust.ci.upper <- sqrt(max((fmin.ci.upper- c.adj/n)/df, 0))
+  c.adj <- c.adj.val(fit, gamma, structured, expected)/df
+  fit.sample.adj <- 
+  rmsea.ci.lower <- lavInspect(fit.sample.adj, "fit")["rmsea.ci.lower"]
+  rmsea.ci.upper <- lavInspect(fit.sample.adj, "fit")["rmsea.ci.upper"]
   rmsea.ci <- c(rmsea.adjust.ci.lower, rmsea.adjust.ci.upper)
   rmsea.ci
 }
@@ -548,7 +545,7 @@ simu.rmsea.ci <- function(pop.model, sat.model, path.model.list, sample.size, re
   num.fit.indices <- 6
   num.path.mod <- length(path.model.list)
   
-  fit.list <- vector(mode="list", length=rep.num)
+  ci.list <- vector(mode="list", length=rep.num)
   struct.path <- c("eta1~~eta1","eta1~~eta2", "eta1~~eta3", "xi1~~eta1", "xi2~~eta1",  "xi3~~eta1", 
                    "xi4~~eta1", "eta2~~eta2", "eta2~~eta3", "xi1~~eta2" , "xi2~~eta2" , "xi3~~eta2", 
                    "xi4~~eta2" , "eta3~~eta3" ,"xi1~~eta3",  "xi2~~eta3" , "xi3~~eta3" , "xi4~~eta3", 
@@ -584,30 +581,51 @@ simu.rmsea.ci <- function(pop.model, sat.model, path.model.list, sample.size, re
         
         
         for(i in 1:num.path.mod){
-          fit2 <- sem(path.model.list[[i]], sample.cov = sat.struct.cov, sample.nobs = sample.size, likelihood = "wishart")
+          fit2 <- sem(path.model.list[[i]], 
+                      sample.cov = sat.struct.cov, 
+                      sample.nobs = sample.size, 
+                      likelihood = "wishart")
+          df <- lavInspect(fit2, "fit")["df"]
           
-          #compute fit indices
-          rmsea.ci.default <- c(lavInspect(fit2, "fit")["rmsea.ci.lower"],
-                                lavInspect(fit2, "fit")["rmsea.ci.upper"])
-          rmsea.ci.adj.str.exp <- rmsea.ci(fit2, Gamma, structured = T)
-          rmsea.ci.adj.str.exp.tri <-rmsea.ci(fit2, Gamma.tri, structured = T)
-          rmsea.all <- c(rmsea.ci.default,
-                         rmsea.ci.adj.str.exp,
-                         rmsea.ci.adj.str.exp.tri)
           
           
           
-          ci.matrix[,i] <-  rmsea.all 
+          #compute fit indices
+          rmsea.ci.default <- lavInspect(fit2, "fit")[c("rmsea.ci.lower",
+                                                        "rmsea.ci.upper")]
+          
+          c.adj <- c.adj.val(fit2, gamma=Gamma, structured=T, expected=T)/df
+          fit.sample.adj <- sem(path.model.list[[i]], 
+                                sample.cov = sat.struct.cov, 
+                                sample.nobs = sample.size/c.adj, 
+                                likelihood = "wishart", start=fit2)
+          rmsea.ci.adj.str.exp <- lavInspect(fit.sample.adj, "fit")[c("rmsea.ci.lower",
+                                                                      "rmsea.ci.upper")]
+          
+          
+          
+          c.adj.tri <- c.adj.val(fit2, gamma=Gamma.tri, structured=T, expected=T)/df
+          fit.sample.adj.tri <- sem(path.model.list[[i]], 
+                                sample.cov = sat.struct.cov, 
+                                sample.nobs = sample.size/c.adj.tri, 
+                                likelihood = "wishart", start=fit2)
+          rmsea.ci.adj.str.exp.tri <- lavInspect(fit.sample.adj.tri, 
+                                                 "fit")[c("rmsea.ci.lower", 
+                                                          "rmsea.ci.upper")]
+          rmsea.ci.all <- c(rmsea.ci.default, 
+                            rmsea.ci.adj.str.exp,
+                            rmsea.ci.adj.str.exp.tri)
+
+          ci.matrix[,i] <-   rmsea.ci.all
           
         }
         
         ci.matrix <- round(ci.matrix, 8)
-        fit.list[[j]] <- ci.matrix
+        ci.list[[j]] <- ci.matrix
         print(j)
         
       }
     }
   }
-  fit.list
-  
+  ci.list
 }
