@@ -325,7 +325,171 @@ cfi.adj <- function(fit, gamma, structured=T, expected=T){
 }
 
 
-
+##Purpose: compute the new adjusted confidence interval for CFI. 
+##Argument:
+## 1) fit: the SEM fit from step 2
+## 2) gamma: a gamma matrix computed using fit1 in step 1; can either be triple product or not
+## 3) structured: logical; whether the weight matrix should be structured. 
+## 4) expected: logical; whether the expected weight matrix should be used. 
+cfi.adj.ci <- function(fit2, gamma, structured=T, expected=T){
+  if (structured==T){
+    fit2@Options$h1.information = "structured" 
+  } else {
+    fit2@Options$h1.information = "unstructured" 
+  }
+  n <- lavInspect(fit2, "nobs")
+  fit2B <-  lavaan:::lav_object_independence(fit2, se=T) 
+  c.adj <- c.adj.val(fit2, gamma, structured, expected)
+  cB.adj <- cB.adj.val(fit2, gamma, structured, expected)
+  
+  dfB <- lavInspect(fit2B, "fit")
+  FminB <- lavInspect(fit2B, "fit")["fmin"]*2
+  Fmin <- lavInspect(fit2, "fit")["fmin"]*2
+  df <- lavInspect(fit2, "fit")["df"]
+  
+  if(max(FminB-cB.adj/n, Fmin-c.adj/n, 0) ==0 ){
+    cfi.adjust <- 1
+  } else{
+    cfi.adjust <-1- max(Fmin-c.adj/n, 0) / max(FminB-cB.adj/n, Fmin-c.adj/n)
+  }  
+  ####Computing CI using Lai(2019)'s method
+  #CFI CI based on 
+  #Keke Lai (2019) A Simple Analytic Confidence Interval for CFI Given
+  #Nonnormal Data, Structural Equation Modeling: A Multidisciplinary Journal, 26:5, 757-777
+  #Code is from Appendix B
+  #Note: .A indicates things related to the hypothesized model
+  #      .Z indicates things related to the baseline model. These are used in Lai's original code
+  
+  H.A <- inspect(fit2, "hessian")*2
+  H.A.inv <- try(chol2inv(chol(H.A)), TRUE)
+  if(class(H.A.inv)[1]!="matrix") stop("Model A did not converge to a minimizer")
+  H.Z <- inspect(fit2B, "hessian")*2
+  H.Z.inv <- try(chol2inv(chol(H.Z)), TRUE)
+  N <- inspect(fit2, "nobs")
+  ## Rearrange some matrices ##
+  sigma.dev1.A <- lavaan:::computeDelta(fit2@Model)[[1]]
+  sigma.dev1.Z0 <- lavaan:::computeDelta(fit2B@Model)[[1]]
+  S <- inspect(fit2, "sampstat")$'cov'
+  p <- dim(S)[1]
+  S <- as.matrix(S, p, p)
+  Sigma.theta.A <- inspect(fit2, "cov.ov")
+  Sigma.theta.Z0 <- inspect(fit2B, "cov.ov")
+  p.star <- p*(p+1)/2
+  target.var.names <- rownames(S)
+  current.var.names <- rownames(Sigma.theta.Z0)
+  Sigma.theta.Z <- matrix(NA, p, p)
+  rownames(Sigma.theta.Z) <- colnames(Sigma.theta.Z) <- target.var.names
+  for (i.row in 1:p){
+    for(i.col in 1:p){
+      row.name <- target.var.names[i.row]
+      col.name <- target.var.names[i.col]
+      pick.row <- which(current.var.names==row.name)
+      pick.col <- which(current.var.names==col.name)
+      Sigma.theta.Z[i.row, i.col] <- Sigma.theta.Z0[pick.row, pick.col]
+    }
+  }
+  current.matrix <- matrix(NA, p, p)
+  current.matrix[lower.tri(current.matrix,
+                           diag=TRUE)] <- 1:p.star
+  pick.vech <- rep(NA, p.star)
+  j <- 1
+  for(i.col in 1:p){
+    for(i.row in i.col:p){
+      row.name <- target.var.names[i.row]
+      col.name <- target.var.names[i.col]
+      pick.row <- which(current.var.names==row.name)
+      pick.col <- which(current.var.names==col.name)
+      if(pick.row >= pick.col) pick.vech[j] <- current.matrix[pick.row, pick.col]
+      if(pick.row < pick.col) pick.vech[j] <- current.matrix[pick.col, pick.row]
+      j <- j+1
+    }
+  }
+  
+  q.Z <- dim(sigma.dev1.Z0)[2]
+  sigma.dev1.Z <- matrix(NA, p.star, q.Z)
+  for(i in 1:p.star){
+    pick <- pick.vech[i]
+    sigma.dev1.Z[i,] <- sigma.dev1.Z0[pick,]
+  }
+  ## Finish rearranging matrices ##
+  S.inv <- chol2inv(chol(S))
+  SS <- S %x% S
+  s <- lav_matrix_vech(S)
+  D <- lav_matrix_duplication(p)
+  Sigma.theta.A.inv <- chol2inv(chol(Sigma.theta.A))
+  Sigma.theta.Z.inv <- chol2inv(chol(Sigma.theta.Z))
+  W.A <- Sigma.theta.A.inv %x% Sigma.theta.A.inv
+  W.Z <- Sigma.theta.Z.inv %x% Sigma.theta.Z.inv
+  DWD.A <- lav_matrix_duplication_pre_post(W.A)
+  DWD.Z <- lav_matrix_duplication_pre_post(W.Z)
+  #Derivatives of F wrt S and theta ('th' in code)
+  #The leading 'J' and 'H' denote 1st and 2nd derivatives
+  vec.S.inv <- lav_matrix_vec(S.inv)
+  S.inv.x.S.inv <- S.inv %x% S.inv
+  H.Fs.A <- H.Fs.Z <- lav_matrix_duplication_pre_post(S.inv.x.S.inv)
+  vec.Sig.theta.A.inv <- lav_matrix_vec(Sigma.theta.A.inv)
+  vec.Sig.theta.Z.inv <- lav_matrix_vec(Sigma.theta.Z.inv)
+  J.Fs.A <- t(vec.Sig.theta.A.inv)%*%D - t(vec.S.inv)%*%D
+  J.Fs.Z <- t(vec.Sig.theta.Z.inv)%*%D - t(vec.S.inv)%*%D
+  H.F.ths.A <- (-1)*t(sigma.dev1.A) %*% DWD.A
+  H.F.ths.Z <- (-1)*t(sigma.dev1.Z) %*% DWD.Z
+  H.F.sth.A <- t(H.F.ths.A)
+  
+  H.F.sth.Z <- t(H.F.ths.Z)
+  H.F.thth.A <- H.A
+  H.F.thth.Z <- H.Z
+  J.ths.A <- (-1)*H.A.inv%*% H.F.ths.A
+  J.ths.Z <- (-1)*H.Z.inv%*% H.F.ths.Z
+  #Full derivative d2.F(theta,s)/ds.ds
+  H.Fs.Full.1.A <- H.Fs.A
+  H.Fs.Full.2.A <- H.F.sth.A %*% J.ths.A
+  H.Fs.Full.3.A <- t(J.ths.A) %*% (H.F.ths.A + H.A %*% J.ths.A)
+  H.Fs.full.A <- H.Fs.Full.1.A + H.Fs.Full.2.A + H.Fs.Full.3.A
+  H.Fs.Full.1.Z <- H.Fs.Z
+  H.Fs.Full.2.Z <- H.F.sth.Z %*% J.ths.Z
+  H.Fs.Full.3.Z <- t(J.ths.Z) %*% (H.F.ths.Z + H.Z %*% J.ths.Z)
+  H.Fs.full.Z <- H.Fs.Full.1.Z + H.Fs.Full.2.Z + H.Fs.Full.3.Z
+  F.A.ML <- log(det(Sigma.theta.A)) -log(det(S))+sum(diag(S %*% Sigma.theta.A.inv)) -p
+  F.Z.ML <- log(det(Sigma.theta.Z)) -log(det(S))+sum(diag(S %*% Sigma.theta.Z.inv)) -p
+  
+  J.fs <- rbind(J.Fs.A, J.Fs.Z)
+  H.fs <- matrix(NA, nrow=2*p.star, ncol=p.star)
+  ind.FA <- seq(from=1, to=2*p.star, by=2)
+  ind.FZ <- ind.FA + 1
+  H.fs[ind.FA,] <- H.Fs.full.A
+  H.fs[ind.FZ,] <- H.Fs.full.Z
+  #Derivatives of CFI wrt S
+  J.CFI.f <- cbind((-1)/F.Z.ML, F.A.ML*F.Z.ML^(-2))
+  H.CFI.f <- diag(0, 2)
+  H.CFI.f[1,2] <- H.CFI.f[2,1] <- F.Z.ML^(-2)
+  H.CFI.f[2,2] <- (-2)*F.A.ML * F.Z.ML^(-3)
+  J.CFI.s <- J.CFI.f %*% J.fs
+  H.CFI.s.1 <- t(J.fs) %*% H.CFI.f %*% J.fs
+  H.CFI.s.2 <- diag(1, p.star) %x% J.CFI.f
+  H.CFI.s.3 <- H.CFI.s.2 %*% H.fs
+  H.CFI.s <- H.CFI.s.1 + H.CFI.s.3
+  #SE1 and SE2 for CFI
+  V1.CFI <- J.CFI.s %*% gamma %*% t(J.CFI.s)
+  HG.CFI <- H.CFI.s %*% gamma
+  #HG2.CFI <- HG.CFI %*% HG.CFI
+  #V2.CFI <- V1.CFI + sum(diag(HG2.CFI))/(2*N)
+  SE1 <- sqrt(V1.CFI/N) #According to Lai (2019), this one should work in most situations. I will just use this one.
+  #SE2 <- sqrt(V2.CFI/N)
+  
+  
+  
+  
+  alpha <- 0.1
+  c<-1-alpha/2
+  zc<-qnorm(c) 
+  
+  cfi.adjust.ci.lower <- min(max(cfi.adjust-zc*SE1,0),1)
+  cfi.adjust.ci.upper <- min(cfi.adjust+zc*SE1,1)
+  
+  
+  c(cfi.adjust.ci.lower, cfi.adjust.ci.upper)
+  
+}
 
 
 
@@ -789,6 +953,82 @@ simu.srmr.ci <- function(pop.model, sat.model, path.model.list, sample.size, rep
 
 
 
+##Purpose: generate a list of matrices with confidence interval for CFI for a given condition. 
+### Each simulated dataset has a matrix of fit indices with rows being different kinds of fit and columns being different path models. 
+### These matrices are combined as a list across repetitions. 
+####Argument:
+#pop.model: the population model that is used for generating data. 
+#sat.model: the model used in step 1 of the two-stage procedure; it is saturated in the latent variables. 
+#path.model.list: a list of path model used in step 2 of the two-stage procedure
+#sample.size: sample size in the condition
+#rep.num: number of repetitions for the stimulation study. 
+simu.cfi.ci <- function(pop.model, sat.model, path.model.list, sample.size, rep.num){
+  num.fit.indices <- 4
+  num.path.mod <- length(path.model.list)
+  
+  ci.list <- vector(mode="list", length=rep.num)
+  struct.path <- c("eta1~~eta1","eta1~~eta2", "eta1~~eta3", "xi1~~eta1", "xi2~~eta1",  "xi3~~eta1", 
+                   "xi4~~eta1", "eta2~~eta2", "eta2~~eta3", "xi1~~eta2" , "xi2~~eta2" , "xi3~~eta2", 
+                   "xi4~~eta2" , "eta3~~eta3" ,"xi1~~eta3",  "xi2~~eta3" , "xi3~~eta3" , "xi4~~eta3", 
+                   "xi1~~xi1" ,  "xi1~~xi2" ,  "xi1~~xi3",   "xi1~~xi4" ,  "xi2~~xi2" ,  "xi2~~xi3"  ,
+                   "xi2~~xi4" ,  "xi3~~xi3" ,  "xi3~~xi4"  , "xi4~~xi4"  ) 
+  
+  for(j in 1:rep.num){
+    ci.matrix <- matrix(nrow=num.fit.indices, ncol=num.path.mod)
+    colnames(ci.matrix) <-paste("path.mod", 0:(num.path.mod-1), sep="")
+    rownames(ci.matrix) <- c("cfi.ci.lower.adj.str.exp",
+                             "cfi.ci.upper.adj.str.exp",
+                             "cfi.ci.lower.adj.str.exp.tri",
+                             "cfi.ci.upper.adj.str.exp.tri")
+    
+    simuData<- simulateData(pop.model, sample.nobs=sample.size)
+    fit1 <- sem(sat.model, data = simuData, estimator="ML", likelihood="wishart")
+    if (lavInspect(fit1, "converged")==F){ 
+      print(j)
+    } else {
+      sat.struct.cov <- lavInspect(fit1, "cov.lv")[c(5:7, 1:4),c(5:7, 1:4) ]
+      if (is.positive.definite(sat.struct.cov)==F){
+        print(j)
+      } else{
+        #compute gamma
+        fit1@Options$h1.information = "structured" 
+        W1.unstr.invert <- lavInspect(fit1, "inverted.information.observed")[struct.path, struct.path]
+        V1.unstr <- lavInspect(fit1, "information.first.order")[struct.path, struct.path]
+        Gamma.tri <- W1.unstr.invert%*%V1.unstr%*%W1.unstr.invert
+        Gamma <- W1.unstr.invert
+        
+        
+        
+        for(i in 1:num.path.mod){
+          fit2 <- sem(path.model.list[[i]], 
+                      sample.cov = sat.struct.cov, 
+                      sample.nobs = sample.size, 
+                      likelihood = "wishart")
+          df <- lavInspect(fit2, "fit")["df"]
+          
+          
+          #compute fit indices
+          
+          cfi.ci.adj.str.exp <- cfi.adj.ci(fit2, Gamma)
+          
+          cfi.ci.adj.str.exp.tri <- cfi.adj.ci(fit2, Gamma.tri)
+          
+          cfi.ci.all <- c(cfi.ci.adj.str.exp, 
+                          cfi.ci.adj.str.exp.tri )
+          
+          ci.matrix[,i] <-   cfi.ci.all
+          
+        }
+        
+        ci.matrix <- round(ci.matrix, 8)
+        ci.list[[j]] <- ci.matrix
+        print(j)
+        
+      }
+    }
+  }
+  ci.list
+}
 
 
 
