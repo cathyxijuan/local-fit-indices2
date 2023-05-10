@@ -13,8 +13,18 @@ load("rmsea.ci.mod.high.n300.RData")
 load("rmsea.ci.mod.high.n500.RData")
 load("rmsea.ci.mod.high.n800.RData")
 load("rmsea.ci.mod.high.n1000.RData")
+load("srmr.ci.mod.orig.n150.RData")
+load("srmr.ci.mod.orig.n200.RData")
+load("srmr.ci.mod.orig.n300.RData")
+load("srmr.ci.mod.orig.n500.RData")
 load("srmr.ci.mod.orig.n800.RData")
 load("srmr.ci.mod.orig.n1000.RData")
+load("srmr.ci.mod.high.n150.RData")
+load("srmr.ci.mod.high.n200.RData")
+load("srmr.ci.mod.high.n300.RData")
+load("srmr.ci.mod.high.n500.RData")
+load("srmr.ci.mod.high.n800.RData")
+load("srmr.ci.mod.high.n1000.RData")
 
 
 pop.rmsea <- pop.indices["pop.rmsea",]
