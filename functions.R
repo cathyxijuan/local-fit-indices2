@@ -1076,3 +1076,101 @@ ci.coverage.cfi <- function(pop.indices, ci.data.list){
   list.mean(ci.check)
   
 }
+
+
+
+
+##Purpose: compute the confidence interval's missing rate from below (i.e., the population value is lower than the lower bound of the CI)
+##Arguments:
+##### 1) pop.indices: a numeric vector that contains the population values of the fit indices.
+##### 2) ci.data.list: a list of confidence intervals from the simulation. 
+missing.rate.below <- function(pop.indices, ci.data.list){
+  ci.check <- list()
+  ci.data <- remove.null(ci.data.list)
+  simu.num <- length(ci.data)
+  for(i in 1:simu.num){
+    ci <- ci.data[[i]]
+    ci.default <- ci[1,] >= pop.indices 
+    ci.adj.str.exp <- ci[3,] >= pop.indices 
+    ci.adj.str.exp.tri <- ci[5,] >= pop.indices 
+    ci.check[[i]] <- rbind(ci.default,
+                           ci.adj.str.exp,
+                           ci.adj.str.exp.tri)
+  }
+  
+  list.mean(ci.check)
+  
+}
+
+
+
+
+##Purpose: compute the confidence interval's missing rate from above (i.e., the population value is higher than the upper bound of the CI)
+##Arguments:
+##### 1) pop.indices: a numeric vector that contains the population values of the fit indices.
+##### 2) ci.data.list: a list of confidence intervals from the simulation. 
+missing.rate.above <- function(pop.indices, ci.data.list){
+  ci.check <- list()
+  ci.data <- remove.null(ci.data.list)
+  simu.num <- length(ci.data)
+  for(i in 1:simu.num){
+    ci <- ci.data[[i]]
+    ci.default <- pop.indices >=ci[2,]
+    ci.adj.str.exp <- pop.indices >=ci[4,]
+    ci.adj.str.exp.tri <- pop.indices >=ci[6,]
+    ci.check[[i]] <- rbind(ci.default,
+                           ci.adj.str.exp,
+                           ci.adj.str.exp.tri)
+  }
+  
+  list.mean(ci.check)
+  
+}
+
+
+
+
+
+##Purpose: compute the confidence interval's missing rate from below for CFI (i.e., the population value is lower than the lower bound of the CI)
+##Arguments:
+##### 1) pop.indices: a numeric vector that contains the population values of the fit indices.
+##### 2) ci.data.list: a list of confidence intervals from the simulation. 
+missing.rate.below.cfi <- function(pop.indices, ci.data.list){
+  ci.check <- list()
+  ci.data <- remove.null(ci.data.list)
+  simu.num <- length(ci.data)
+  for(i in 1:simu.num){
+    ci <- ci.data[[i]]
+    ci.adj.str.exp <- ci[1,] >= pop.indices 
+    ci.adj.str.exp.tri <- ci[3,] >= pop.indices 
+    ci.check[[i]] <- rbind(ci.adj.str.exp,
+                           ci.adj.str.exp.tri)
+  }
+  
+  list.mean(ci.check)
+  
+}
+
+
+
+
+##Purpose: compute the confidence interval's missing rate from above for CFI (i.e., the population value is higher than the upper bound of the CI)
+##Arguments:
+##### 1) pop.indices: a numeric vector that contains the population values of the fit indices.
+##### 2) ci.data.list: a list of confidence intervals from the simulation. 
+missing.rate.above.cfi <- function(pop.indices, ci.data.list){
+  ci.check <- list()
+  ci.data <- remove.null(ci.data.list)
+  simu.num <- length(ci.data)
+  for(i in 1:simu.num){
+    ci <- ci.data[[i]]
+    ci.adj.str.exp <- pop.indices >=ci[2,]
+    ci.adj.str.exp.tri <- pop.indices >=ci[4,]
+    ci.check[[i]] <- rbind(ci.adj.str.exp,
+                           ci.adj.str.exp.tri)
+  }
+  
+  list.mean(ci.check)
+  
+}
+
