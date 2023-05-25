@@ -189,7 +189,67 @@ srmr.adj.ci <- function(fit, gamma, structured=T, expected=T){
 
 
 
-
+##Purpose: check SRMR CI computation; prints out the k_s, adjusted SRMR, standard error and the CI
+##Argument:
+## 1) fit: the SEM fit from step 2
+## 2) gamma: a gamma matrix computed using fit1 in step 1; can either be triple product or not
+## 3) structured: logical; whether the weight matrix should be structured.
+## 4) expected: logical; whether the weight matrix should be expected or observed; only differ if structured=T
+srmr.adj.ci.check.val <- function(fit, gamma, structured=T, expected=T){
+  if (structured==T){
+    fit@Options$h1.information = "structured" 
+    if(expected==T){
+      W <- lavInspect(fit, "h1.information.expected")
+    } else{
+      W <- lavInspect(fit, "h1.information.observed")
+    }
+  } else {
+    fit@Options$h1.information = "unstructured" 
+    W <- lavInspect(fit, "wls.v")
+  }
+  
+  n <- lavInspect(fit, "nobs")
+  residual.cov <- lavInspect(fit, "resid")$cov
+  S <- lavInspect(fit, "sampstat")$cov 
+  
+  samp.var <- diag(S)
+  resid.cov.vech <- OpenMx::vech(residual.cov)
+  p <-ncol(residual.cov)
+  t <- p*(p+1)/2
+  
+  s1 <- OpenMx::vech(samp.var%*%t(samp.var))
+  G <- diag(s1) #G matrix in Maydeu-Olivares 2017's paper; used later in the computation of unbiased SRMR
+  G.inv <- diag(1/s1)
+  T_s  <- t(resid.cov.vech)%*%G.inv%*%resid.cov.vech
+  
+  
+  delta <- lavInspect(fit, "delta")
+  # W.R<-chol(W)
+  # H<-delta%*%qr.solve(W.R%*%delta, W.R) #has problems when W is not positive definite, which happens when W is structured and observed
+  H <- delta%*%solve(t(delta)%*%W%*%delta)%*%t(delta)%*%W
+  G_sqrt_inv <- diag(1/sqrt(s1)) #inverse of the square root of G 
+  e_s <- G_sqrt_inv%*%resid.cov.vech #before equation 15
+  
+  Xi_u <- (diag(nrow(H)) - H)%*%gamma%*%t((diag(nrow(H)) - H))/n #before Equation 16
+  Xi_s <- G_sqrt_inv%*%Xi_u%*%G_sqrt_inv
+  tr.Xissqr<-sum(Xi_s^2)
+  k_s <- 1 -((tr.Xissqr + 2*t(e_s)%*%Xi_s%*%e_s)/(4*T_s^2))
+  
+  tr.Xi<-sum(diag(Xi_s))
+  SRMR.sq<-(T_s-tr.Xi)/t
+  srmr_unbias.new <-  sqrt(max(0,SRMR.sq))/k_s
+  
+  se.new <- sqrt(k_s^(-2)*(tr.Xissqr+2*t(e_s)%*%Xi_s%*%e_s)/(2*t*T_s))
+  alpha=0.1
+  c<-1-alpha/2
+  zc<-qnorm(c) 
+  srmr_unbias.new.ci.lower <- max(0, srmr_unbias.new-zc*se.new )
+  srmr_unbias.new.ci.upper <- srmr_unbias.new+zc*se.new
+  
+  out <- c(k_s, srmr_unbias.new, se.new, srmr_unbias.new.ci.lower, srmr_unbias.new.ci.upper)
+  names(out)<- c("k_s", "srmr", "se", "srmr.ci.lower", "srmr.ci.upper")
+  out
+}
 
 
 ##Purpose: compute the old/default adjusted SRMR confidence interval (CI) in step 2 of the two-stage procedure
@@ -947,6 +1007,96 @@ simu.srmr.ci <- function(pop.model, sat.model, path.model.list, sample.size, rep
   }
   ci.list
 }
+
+
+##Purpose: generate a list of matrices that can check the computations of SRMR CIs. 
+### Each simulated dataset has a matrix of fit indices with rows being different kinds of fit and columns being different path models. 
+### These matrices are combined as a list across repetitions. 
+####Argument:
+#pop.model: the population model that is used for generating data. 
+#sat.model: the model used in step 1 of the two-stage procedure; it is saturated in the latent variables. 
+#path.model.list: a list of path model used in step 2 of the two-stage procedure
+#sample.size: sample size in the condition
+#rep.num: number of repetitions for the stimulation study. 
+simu.srmr.ci.check.val <- function(pop.model, sat.model, path.model.list, sample.size, rep.num){
+  num.fit.indices <- 10
+  num.path.mod <- length(path.model.list)
+  
+  ci.list <- vector(mode="list", length=rep.num)
+  struct.path <- c("eta1~~eta1","eta1~~eta2", "eta1~~eta3", "xi1~~eta1", "xi2~~eta1",  "xi3~~eta1", 
+                   "xi4~~eta1", "eta2~~eta2", "eta2~~eta3", "xi1~~eta2" , "xi2~~eta2" , "xi3~~eta2", 
+                   "xi4~~eta2" , "eta3~~eta3" ,"xi1~~eta3",  "xi2~~eta3" , "xi3~~eta3" , "xi4~~eta3", 
+                   "xi1~~xi1" ,  "xi1~~xi2" ,  "xi1~~xi3",   "xi1~~xi4" ,  "xi2~~xi2" ,  "xi2~~xi3"  ,
+                   "xi2~~xi4" ,  "xi3~~xi3" ,  "xi3~~xi4"  , "xi4~~xi4"  ) 
+  
+  for(j in 1:rep.num){
+    ci.matrix <- matrix(nrow=num.fit.indices, ncol=num.path.mod)
+    colnames(ci.matrix) <-paste("path.mod", 0:(num.path.mod-1), sep="")
+    rownames(ci.matrix) <- c("k_s.adj.str.exp", 
+                             "srmr.adj.str.exp", 
+                             "se.adj.str.exp", 
+                             "srmr.ci.lower.adj.str.exp", 
+                             "srmr.ci.upper.adj.str.exp",
+                             "k_s.adj.str.exp.tri", 
+                             "srmr.adj.str.exp.tri", 
+                             "se.adj.str.exp.tri", 
+                             "srmr.ci.lower.adj.str.exp.tri", 
+                             "srmr.ci.upper.adj.str.exp.tri")
+
+    
+    simuData<- simulateData(pop.model, sample.nobs=sample.size)
+    fit1 <- sem(sat.model, data = simuData, estimator="ML", likelihood="wishart")
+    if (lavInspect(fit1, "converged")==F){ 
+      print(j)
+    } else {
+      sat.struct.cov <- lavInspect(fit1, "cov.lv")[c(5:7, 1:4),c(5:7, 1:4) ]
+      if (is.positive.definite(sat.struct.cov)==F){
+        print(j)
+      } else{
+        #compute gamma
+        fit1@Options$h1.information = "structured" 
+        W1.unstr.invert <- lavInspect(fit1, "inverted.information.observed")[struct.path, struct.path]
+        V1.unstr <- lavInspect(fit1, "information.first.order")[struct.path, struct.path]
+        Gamma.tri <- W1.unstr.invert%*%V1.unstr%*%W1.unstr.invert
+        Gamma <- W1.unstr.invert
+        
+        
+        
+        for(i in 1:num.path.mod){
+          fit2 <- sem(path.model.list[[i]], 
+                      sample.cov = sat.struct.cov, 
+                      sample.nobs = sample.size, 
+                      likelihood = "wishart")
+          df <- lavInspect(fit2, "fit")["df"]
+          
+          
+          #compute fit indices
+          
+          
+          srmr.ci.adj.str.exp <- srmr.adj.ci.check.val(fit2, Gamma)
+          
+          srmr.ci.adj.str.exp.tri <- srmr.adj.ci.check.val(fit2, Gamma.tri)
+          
+          srmr.ci.all <- c(srmr.ci.adj.str.exp,
+                           srmr.ci.adj.str.exp.tri)
+          
+          ci.matrix[,i] <-   srmr.ci.all
+          
+        }
+        
+        ci.matrix <- round(ci.matrix, 3)
+        ci.list[[j]] <- ci.matrix
+        print(j)
+        
+      }
+    }
+  }
+  ci.list
+}
+
+
+
+
 
 
 

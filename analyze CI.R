@@ -38,6 +38,8 @@ load("cfi.ci.mod.high.n500.RData")
 load("cfi.ci.mod.high.n800.RData")
 load("cfi.ci.mod.high.n1000.RData")
 
+pop.indices
+
 pop.rmsea <- pop.indices["pop.rmsea",]
 rmsea.ci.orig.mod <- list("n150"=ci.coverage(pop.rmsea, rmsea.ci.mod.orig.n200),
                           "n200"=ci.coverage(pop.rmsea, rmsea.ci.mod.orig.n200),
