@@ -22,12 +22,13 @@ ks <- round(cbind(test[1,1,], test[1,2,], test[1,3,],
             test[1,4,], test[1,5,], test[1,6,]), 3)
 colnames(ks) <- paste("path.mod", 0:5, sep="")
 
-write.csv(ks, "ksn1000.csv", row.names=F)
+#write.csv(ks, "ksn500.csv", row.names=F)
 
 round(var(ks),3)
-
-
-
+hist(ks[,1])
+table(round(ks[,1],1))
+0.01/0.6
+0.01/0.8
 
 
 
