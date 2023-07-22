@@ -312,7 +312,7 @@ rmsea.adj <- function(fit, gamma, structured=T, expected=T){
   c.adj <- c.adj.val(fit, gamma, structured, expected)
   Fmin <- lavInspect(fit, "fit")["fmin"]*2
   df <- lavInspect(fit, "fit")["df"]
-  sqrt(max((Fmin- c.adj/n)/df, 0))
+  sqrt(max((Fmin- c.adj/(n-1))/df, 0))
 }
 
 
@@ -378,10 +378,10 @@ cfi.adj <- function(fit, gamma, structured=T, expected=T){
   Fmin <- lavInspect(fit, "fit")["fmin"]*2
   df <- lavInspect(fit, "fit")["df"]
   
-  if(max(FminB-cB.adj/n, Fmin-c.adj/n, 0) ==0 ){
+  if(max(FminB-cB.adj/(n-1), Fmin-c.adj/(n-1), 0) ==0 ){
     1
   } else{
-    1- max(Fmin-c.adj/n, 0) / max(FminB-cB.adj/n, Fmin-c.adj/n)}  
+    1- max(Fmin-c.adj/(n-1), 0) / max(FminB-cB.adj/(n-1), Fmin-c.adj/(n-1))}  
 }
 
 
@@ -407,10 +407,10 @@ cfi.adj.ci <- function(fit2, gamma, structured=T, expected=T){
   Fmin <- lavInspect(fit2, "fit")["fmin"]*2
   df <- lavInspect(fit2, "fit")["df"]
   
-  if(max(FminB-cB.adj/n, Fmin-c.adj/n, 0) ==0 ){
+  if(max(FminB-cB.adj/(n-1), Fmin-c.adj/(n-1), 0) ==0 ){
     cfi.adjust <- 1
   } else{
-    cfi.adjust <-1- max(Fmin-c.adj/n, 0) / max(FminB-cB.adj/n, Fmin-c.adj/n)
+    cfi.adjust <-1- max(Fmin-c.adj/(n-1), 0) / max(FminB-cB.adj/(n-1), Fmin-c.adj/(n-1))
   }  
   ####Computing CI using Lai(2019)'s method
   #CFI CI based on 
