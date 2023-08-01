@@ -3,9 +3,6 @@ source("functions.R")
 
 
 
-
-
-
 set.seed(777)
 fit.mod.high.n150 <- simu.fit(pop.mod, sat.struct, path.mod.list, 
                               sample.size=150, rep.num=5000)
