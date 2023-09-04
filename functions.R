@@ -425,14 +425,14 @@ cfi.adj.ci <- function(fit2, gamma, structured=T, expected=T){
   if(class(H.A.inv)[1]!="matrix") stop("Model A did not converge to a minimizer")
   H.Z <- inspect(fit2B, "hessian")*2
   H.Z.inv <- try(chol2inv(chol(H.Z)), TRUE)
-  N <- inspect(fit2, "nobs")
+  N <- inspect(fit2, "nobs") #same as n
   ## Rearrange some matrices ##
-  sigma.dev1.A <- lavaan:::computeDelta(fit2@Model)[[1]]
-  sigma.dev1.Z0 <- lavaan:::computeDelta(fit2B@Model)[[1]]
+  sigma.dev1.A <- lavaan:::computeDelta(fit2@Model)[[1]] #A: hypothesized model
+  sigma.dev1.Z0 <- lavaan:::computeDelta(fit2B@Model)[[1]]#Z: baseline model
   S <- inspect(fit2, "sampstat")$'cov'
   p <- dim(S)[1]
   S <- as.matrix(S, p, p)
-  Sigma.theta.A <- inspect(fit2, "cov.ov")
+  Sigma.theta.A <- inspect(fit2, "cov.ov") #note: this is the model-implied variance-covariance matrix of the observed variables. Aliases "sigma", "sigma.hat"
   Sigma.theta.Z0 <- inspect(fit2B, "cov.ov")
   p.star <- p*(p+1)/2
   target.var.names <- rownames(S)
@@ -489,48 +489,48 @@ cfi.adj.ci <- function(fit2, gamma, structured=T, expected=T){
   H.Fs.A <- H.Fs.Z <- lav_matrix_duplication_pre_post(S.inv.x.S.inv)
   vec.Sig.theta.A.inv <- lav_matrix_vec(Sigma.theta.A.inv)
   vec.Sig.theta.Z.inv <- lav_matrix_vec(Sigma.theta.Z.inv)
-  J.Fs.A <- t(vec.Sig.theta.A.inv)%*%D - t(vec.S.inv)%*%D
-  J.Fs.Z <- t(vec.Sig.theta.Z.inv)%*%D - t(vec.S.inv)%*%D
-  H.F.ths.A <- (-1)*t(sigma.dev1.A) %*% DWD.A
-  H.F.ths.Z <- (-1)*t(sigma.dev1.Z) %*% DWD.Z
-  H.F.sth.A <- t(H.F.ths.A)
+  J.Fs.A <- t(vec.Sig.theta.A.inv)%*%D - t(vec.S.inv)%*%D #Appendix A2 for hypothesized model
+  J.Fs.Z <- t(vec.Sig.theta.Z.inv)%*%D - t(vec.S.inv)%*%D #Appendix A2 for baseline model
+  #H.F.ths.A <- (-1)*t(sigma.dev1.A) %*% DWD.A
+ # H.F.ths.Z <- (-1)*t(sigma.dev1.Z) %*% DWD.Z
+ # H.F.sth.A <- t(H.F.ths.A)
   
-  H.F.sth.Z <- t(H.F.ths.Z)
-  H.F.thth.A <- H.A
-  H.F.thth.Z <- H.Z
-  J.ths.A <- (-1)*H.A.inv%*% H.F.ths.A
-  J.ths.Z <- (-1)*H.Z.inv%*% H.F.ths.Z
+ # H.F.sth.Z <- t(H.F.ths.Z)
+ # H.F.thth.A <- H.A
+ # H.F.thth.Z <- H.Z
+ # J.ths.A <- (-1)*H.A.inv%*% H.F.ths.A
+ # J.ths.Z <- (-1)*H.Z.inv%*% H.F.ths.Z
   #Full derivative d2.F(theta,s)/ds.ds
-  H.Fs.Full.1.A <- H.Fs.A
-  H.Fs.Full.2.A <- H.F.sth.A %*% J.ths.A
-  H.Fs.Full.3.A <- t(J.ths.A) %*% (H.F.ths.A + H.A %*% J.ths.A)
-  H.Fs.full.A <- H.Fs.Full.1.A + H.Fs.Full.2.A + H.Fs.Full.3.A
-  H.Fs.Full.1.Z <- H.Fs.Z
-  H.Fs.Full.2.Z <- H.F.sth.Z %*% J.ths.Z
-  H.Fs.Full.3.Z <- t(J.ths.Z) %*% (H.F.ths.Z + H.Z %*% J.ths.Z)
-  H.Fs.full.Z <- H.Fs.Full.1.Z + H.Fs.Full.2.Z + H.Fs.Full.3.Z
-  F.A.ML <- log(det(Sigma.theta.A)) -log(det(S))+sum(diag(S %*% Sigma.theta.A.inv)) -p
-  F.Z.ML <- log(det(Sigma.theta.Z)) -log(det(S))+sum(diag(S %*% Sigma.theta.Z.inv)) -p
+  #H.Fs.Full.1.A <- H.Fs.A
+  #H.Fs.Full.2.A <- H.F.sth.A %*% J.ths.A
+  #H.Fs.Full.3.A <- t(J.ths.A) %*% (H.F.ths.A + H.A %*% J.ths.A)
+ # H.Fs.full.A <- H.Fs.Full.1.A + H.Fs.Full.2.A + H.Fs.Full.3.A
+ # H.Fs.Full.1.Z <- H.Fs.Z
+ # H.Fs.Full.2.Z <- H.F.sth.Z %*% J.ths.Z
+ # H.Fs.Full.3.Z <- t(J.ths.Z) %*% (H.F.ths.Z + H.Z %*% J.ths.Z)
+ # H.Fs.full.Z <- H.Fs.Full.1.Z + H.Fs.Full.2.Z + H.Fs.Full.3.Z
+ F.A.ML <- log(det(Sigma.theta.A)) -log(det(S))+sum(diag(S %*% Sigma.theta.A.inv)) -p
+ F.Z.ML <- log(det(Sigma.theta.Z)) -log(det(S))+sum(diag(S %*% Sigma.theta.Z.inv)) -p
   
   J.fs <- rbind(J.Fs.A, J.Fs.Z)
-  H.fs <- matrix(NA, nrow=2*p.star, ncol=p.star)
-  ind.FA <- seq(from=1, to=2*p.star, by=2)
-  ind.FZ <- ind.FA + 1
-  H.fs[ind.FA,] <- H.Fs.full.A
-  H.fs[ind.FZ,] <- H.Fs.full.Z
+  #H.fs <- matrix(NA, nrow=2*p.star, ncol=p.star)
+ # ind.FA <- seq(from=1, to=2*p.star, by=2)
+ # ind.FZ <- ind.FA + 1
+ # H.fs[ind.FA,] <- H.Fs.full.A
+ # H.fs[ind.FZ,] <- H.Fs.full.Z
   #Derivatives of CFI wrt S
-  J.CFI.f <- cbind((-1)/F.Z.ML, F.A.ML*F.Z.ML^(-2))
-  H.CFI.f <- diag(0, 2)
-  H.CFI.f[1,2] <- H.CFI.f[2,1] <- F.Z.ML^(-2)
-  H.CFI.f[2,2] <- (-2)*F.A.ML * F.Z.ML^(-3)
-  J.CFI.s <- J.CFI.f %*% J.fs
-  H.CFI.s.1 <- t(J.fs) %*% H.CFI.f %*% J.fs
-  H.CFI.s.2 <- diag(1, p.star) %x% J.CFI.f
-  H.CFI.s.3 <- H.CFI.s.2 %*% H.fs
-  H.CFI.s <- H.CFI.s.1 + H.CFI.s.3
+  J.CFI.f <- cbind((-1)/F.Z.ML, F.A.ML*F.Z.ML^(-2)) #appendix A15
+ # H.CFI.f <- diag(0, 2)
+  #H.CFI.f[1,2] <- H.CFI.f[2,1] <- F.Z.ML^(-2)
+  #H.CFI.f[2,2] <- (-2)*F.A.ML * F.Z.ML^(-3)
+  J.CFI.s <- J.CFI.f %*% J.fs #appendix A14
+  #H.CFI.s.1 <- t(J.fs) %*% H.CFI.f %*% J.fs
+ # H.CFI.s.2 <- diag(1, p.star) %x% J.CFI.f
+ # H.CFI.s.3 <- H.CFI.s.2 %*% H.fs
+  #H.CFI.s <- H.CFI.s.1 + H.CFI.s.3
   #SE1 and SE2 for CFI
   V1.CFI <- J.CFI.s %*% gamma %*% t(J.CFI.s)
-  HG.CFI <- H.CFI.s %*% gamma
+ # HG.CFI <- H.CFI.s %*% gamma
   #HG2.CFI <- HG.CFI %*% HG.CFI
   #V2.CFI <- V1.CFI + sum(diag(HG2.CFI))/(2*N)
   SE1 <- sqrt(V1.CFI/N) #According to Lai (2019), this one should work in most situations. I will just use this one.
@@ -902,7 +902,7 @@ simu.rmsea.ci <- function(pop.model, sat.model, path.model.list, sample.size, re
           c.adj.tri <- c.adj.val(fit2, gamma=Gamma.tri, structured=T, expected=T)/df
           fit.sample.adj.tri <- sem(path.model.list[[i]], 
                                 sample.cov = sat.struct.cov, 
-                                sample.nobs = sample.size/c.adj.tri, 
+                                sample.nobs = (sample.size-1)/c.adj.tri+1, 
                                 likelihood = "wishart", start=fit2)
           rmsea.ci.adj.str.exp.tri <- lavInspect(fit.sample.adj.tri, 
                                                  "fit")[c("rmsea.ci.lower", 

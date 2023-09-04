@@ -182,6 +182,7 @@ path.mod.list <- list(path.mod0, path.mod1, path.mod2, path.mod3, path.mod4, pat
 # round(pop.fit.mod.orig, 5)
 # 
 # 
+round(pop.fit.mod.orig,4)
 
 
 
