@@ -26,10 +26,10 @@ bias.orig.mod <- vector(mode="list")
 
 for(i in 1:length(means.orig.mod)){
   bias.orig.mod[[names(means.orig.mod)[i]]] <- 
-    round(means.orig.mod[[i]] - pop.indices, 4)
+    round(means.orig.mod[[i]] - pop.indices, 9)
 }
 
-bias.orig.mod
+bias.orig.mod 
 
 
 save(bias.orig.mod, file="bias.orig.mod.RData")
@@ -64,7 +64,7 @@ bias.high.mod <- vector(mode="list")
 
 for(i in 1:length(means.high.mod)){
   bias.high.mod[[names(means.high.mod)[i]]] <- 
-    round(means.high.mod[[i]] - pop.indices, 4)
+    round(means.high.mod[[i]] - pop.indices, 9)
 }
 
 bias.high.mod
