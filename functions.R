@@ -14,10 +14,10 @@ list.mean <- function(lis ){
 #Argument: lis: a list of matrices
 list.sd <- function(lis ){
   if(sum(sapply(lis, is.null))==0){
-    round(apply(simplify2array(lis), 1:2, sd, na.rm = T),4)
+    round(apply(simplify2array(lis), 1:2, sd, na.rm = T),9)
   } else{
     lis <- lis[!(sapply(lis, is.null))]
-    round(apply(simplify2array(lis), 1:2, sd, na.rm = T),4)
+    round(apply(simplify2array(lis), 1:2, sd, na.rm = T),9)
   }
 }
 

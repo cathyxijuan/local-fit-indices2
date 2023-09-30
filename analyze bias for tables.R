@@ -2,6 +2,7 @@ source("functions.R")
 load("pop.indices.RData")
 
 load("fit.mod.orig.n150.RData")
+
 load("fit.mod.orig.n200.RData")
 load("fit.mod.orig.n300.RData")
 load("fit.mod.orig.n500.RData")
