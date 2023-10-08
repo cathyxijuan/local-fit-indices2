@@ -89,7 +89,7 @@ xi2 ~~  xi3 +xi4
 xi3 ~~ xi4
 "
 
-path.mod0 <- "
+path.mod1 <- "
 eta1 ~ xi1 + xi2 + xi3 + xi4
 eta2 ~ xi1 + xi2 + eta1   
 eta3 ~ eta2 + eta1
@@ -99,7 +99,7 @@ xi3  ~~ xi4
 "
 
 
-path.mod1 <- "
+path.mod2 <- "
 eta1 ~ xi1 + xi2 + xi3 + xi4 
 eta2 ~ xi1 + xi2 + eta1   
 eta3 ~ eta2              #delete eta1 here
@@ -108,7 +108,7 @@ xi2 ~~ xi3  + xi4
 xi3  ~~ xi4
 "
 
-path.mod2 <- "
+path.mod3 <- "
 eta1 ~ xi1 + xi2 + xi3 + xi4
 eta2 ~ xi2 + eta1    #delete xi1 here
 eta3 ~ eta2 + eta1
@@ -118,15 +118,6 @@ xi3  ~~ xi4
 "
 
 
-
-path.mod3 <- "
-eta1 ~ xi1 + xi2 + xi3 + xi4
-eta2 ~ xi1 + eta1    #delete xi2 here
-eta3 ~ eta2          #delete eta1 here
-xi1 ~~ xi2 + xi3 + xi4
-xi2 ~~ xi3  + xi4
-xi3  ~~ xi4
-"
 path.mod4 <- "
 eta1 ~ xi1 + xi2 + xi3 + xi4
 eta2 ~ xi2  + eta1     #delete xi1 here
@@ -136,9 +127,18 @@ xi2 ~~ xi3  + xi4
 xi3  ~~ xi4
 "
 
-
-
 path.mod5 <- "
+eta1 ~ xi1 + xi2 + xi3 + xi4
+eta2 ~ xi1 + eta1    #delete xi2 here
+eta3 ~ eta2          #delete eta1 here
+xi1 ~~ xi2 + xi3 + xi4
+xi2 ~~ xi3  + xi4
+xi3  ~~ xi4
+"
+
+
+
+path.mod6 <- "
 eta1 ~ xi1 + xi2 + xi3 + xi4
 eta2 ~ eta1    #delete xi1 and xi2 here
 eta3 ~ eta2    #delete eta1 here
@@ -160,7 +160,7 @@ xi3  ~~ xi4
 "
 
 
-path.mod.list <- list(path.mod0, path.mod1, path.mod2, path.mod3, path.mod4, path.mod5)
+path.mod.list <- list(path.mod1, path.mod2, path.mod3, path.mod4, path.mod5, path.mod6)
 
 
 ### calculate true population SRMR ###
@@ -182,7 +182,7 @@ path.mod.list <- list(path.mod0, path.mod1, path.mod2, path.mod3, path.mod4, pat
 # round(pop.fit.mod.orig, 5)
 # 
 # 
-round(pop.fit.mod.orig,4)
+#round(pop.fit.mod.orig,4)
 
 
 

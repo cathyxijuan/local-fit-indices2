@@ -75,7 +75,8 @@ srmr.adj.str.obs <- srmr.adj(fit2, Gamma, structured = T, expected=F)
 srmr.adj.unstr.tri <-srmr.adj(fit2, Gamma.tri, structured = F)
 srmr.adj.str.exp.tri <-srmr.adj(fit2, Gamma.tri, structured = T)
 srmr.adj.str.obs.tri <-srmr.adj(fit2, Gamma.tri, structured = T, expected = F)
-srmr.all <- c(srmr.unadj, srmr.default.adj.str, srmr.default.adj.unstr, 
+srmr.all <- c(srmr.unadj, 
+              srmr.default.adj.unstr,  srmr.default.adj.str, 
               srmr.adj.unstr, srmr.adj.str.exp, srmr.adj.str.obs,
               srmr.adj.unstr.tri, srmr.adj.str.exp.tri,srmr.adj.str.obs.tri)
 
@@ -99,9 +100,9 @@ names(fit.all) <- c("rmsea.default",
                           "cfi.adj.unstr.tri",
                           "cfi.adj.str.exp.tri", 
                           "cfi.adj.str.obs.tri",
-                          "srmr.unadj", 
-                          "srmr.default.adj.str", 
+                          "srmr.unadj",
                           "srmr.default.adj.unstr", 
+                          "srmr.default.adj.str", 
                           "srmr.adj.unstr", 
                           "srmr.adj.str.exp", 
                           "srmr.adj.str.obs",

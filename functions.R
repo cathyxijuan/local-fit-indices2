@@ -14,10 +14,10 @@ list.mean <- function(lis ){
 #Argument: lis: a list of matrices
 list.sd <- function(lis ){
   if(sum(sapply(lis, is.null))==0){
-    round(apply(simplify2array(lis), 1:2, sd, na.rm = T),9)
+    round(apply(simplify2array(lis), 1:2, sd, na.rm = T),3)
   } else{
     lis <- lis[!(sapply(lis, is.null))]
-    round(apply(simplify2array(lis), 1:2, sd, na.rm = T),9)
+    round(apply(simplify2array(lis), 1:2, sd, na.rm = T),3)
   }
 }
 
@@ -580,7 +580,7 @@ simu.fit <- function(pop.model, sat.model, path.model.list, sample.size, rep.num
   
   for(j in 1:rep.num){
     fit.matrix <- matrix(nrow=num.fit.indices, ncol=num.path.mod)
-    colnames(fit.matrix) <-paste("path.mod", 0:(num.path.mod-1), sep="")
+    colnames(fit.matrix) <-paste("path.mod", 1:(num.path.mod), sep="")
     rownames(fit.matrix) <- c("rmsea.default",
                               "rmsea.adj.unstr", 
                               "rmsea.adj.str.exp",
@@ -596,8 +596,8 @@ simu.fit <- function(pop.model, sat.model, path.model.list, sample.size, rep.num
                               "cfi.adj.str.exp.tri", 
                               "cfi.adj.str.obs.tri",
                               "srmr.unadj", 
+                              "srmr.default.adj.unstr",
                               "srmr.default.adj.str", 
-                              "srmr.default.adj.unstr", 
                               "srmr.adj.unstr", 
                               "srmr.adj.str.exp", 
                               "srmr.adj.str.obs",
@@ -651,15 +651,16 @@ simu.fit <- function(pop.model, sat.model, path.model.list, sample.size, rep.num
           
           
           srmr.unadj <- lavInspect(fit2, "fit")["srmr"]
-          srmr.default.adj.str <- srmr.adj.old(fit2, structured=T)
           srmr.default.adj.unstr <- srmr.adj.old(fit2, structured=F)
+          srmr.default.adj.str <- srmr.adj.old(fit2, structured=T)
           srmr.adj.unstr <-srmr.adj(fit2, Gamma, structured = F)
           srmr.adj.str.exp <- srmr.adj(fit2, Gamma, structured = T)
           srmr.adj.str.obs <- srmr.adj(fit2, Gamma, structured = T, expected=F)
           srmr.adj.unstr.tri <-srmr.adj(fit2, Gamma.tri, structured = F)
           srmr.adj.str.exp.tri <-srmr.adj(fit2, Gamma.tri, structured = T)
           srmr.adj.str.obs.tri <-srmr.adj(fit2, Gamma.tri, structured = T, expected = F)
-          srmr.all <- c(srmr.unadj, srmr.default.adj.str, srmr.default.adj.unstr, 
+          srmr.all <- c(srmr.unadj,
+                        srmr.default.adj.unstr,srmr.default.adj.str, 
                         srmr.adj.unstr, srmr.adj.str.exp, srmr.adj.str.obs,
                         srmr.adj.unstr.tri, srmr.adj.str.exp.tri,srmr.adj.str.obs.tri)
           
@@ -752,14 +753,17 @@ simu.component <- function(pop.model, sat.model, path.model.list, sample.size, r
   
   for(j in 1:rep.num){
     component.matrix <- matrix(nrow=num.fit.indices, ncol=num.path.mod)
-    colnames(component.matrix) <-paste("path.mod", 0:(num.path.mod-1), sep="")
-    rownames(component.matrix) <- c("rmsea.default","rmsea.adj.unstr", "rmsea.adj.str",
+    colnames(component.matrix) <-paste("path.mod", 1:(num.path.mod), sep="")
+    rownames(component.matrix) <- c("rmsea.default",
+                                    "rmsea.adj.unstr", "rmsea.adj.str",
                                     "rmsea.adj.unstr.tri",   "rmsea.adj.str.tri", 
-                                    "cfi.default", "cfi.adj.unstr", "cfi.adj.str",
+                                    "cfi.default", 
+                                    "cfi.adj.unstr", "cfi.adj.str",
                                     "cfi.adj.unstr.tri","cfi.adj.str.tri", 
-                                    "srmr.unadj", "srmr.default.adj.str", "srmr.default.adj.unstr", 
-                                    "srmr.adj.unstr", "srmr.adj.str", "srmr.adj.unstr.tri", 
-                                    "srmr.adj.str.tri")
+                                    "srmr.unadj", 
+                                    "srmr.default.adj.unstr",   "srmr.default.adj.str", 
+                                    "srmr.adj.unstr", "srmr.adj.str", 
+                                    "srmr.adj.unstr.tri",  "srmr.adj.str.tri")
     
     simuData<- simulateData(pop.model, sample.nobs=sample.size)
     fit1 <- sem(sat.model, data = simuData, estimator="ML", likelihood="wishart")
@@ -849,7 +853,7 @@ simu.rmsea.ci <- function(pop.model, sat.model, path.model.list, sample.size, re
   
   for(j in 1:rep.num){
     ci.matrix <- matrix(nrow=num.fit.indices, ncol=num.path.mod)
-    colnames(ci.matrix) <-paste("path.mod", 0:(num.path.mod-1), sep="")
+    colnames(ci.matrix) <-paste("path.mod", 1:(num.path.mod), sep="")
     rownames(ci.matrix) <- c("rmsea.ci.lower.default",
                              "rmsea.ci.upper.default", 
                              "rmsea.ci.lower.adj.str.exp",
@@ -949,7 +953,7 @@ simu.srmr.ci <- function(pop.model, sat.model, path.model.list, sample.size, rep
   
   for(j in 1:rep.num){
     ci.matrix <- matrix(nrow=num.fit.indices, ncol=num.path.mod)
-    colnames(ci.matrix) <-paste("path.mod", 0:(num.path.mod-1), sep="")
+    colnames(ci.matrix) <-paste("path.mod", 1:(num.path.mod), sep="")
     rownames(ci.matrix) <- c("srmr.ci.lower.default",
                              "srmr.ci.upper.default", 
                              "srmr.ci.lower.adj.str.exp",
@@ -1031,7 +1035,7 @@ simu.srmr.ci.check.val <- function(pop.model, sat.model, path.model.list, sample
   
   for(j in 1:rep.num){
     ci.matrix <- matrix(nrow=num.fit.indices, ncol=num.path.mod)
-    colnames(ci.matrix) <-paste("path.mod", 0:(num.path.mod-1), sep="")
+    colnames(ci.matrix) <-paste("path.mod", 1:(num.path.mod), sep="")
     rownames(ci.matrix) <- c("k_s.adj.str.exp", 
                              "srmr.adj.str.exp", 
                              "se.adj.str.exp", 
@@ -1125,7 +1129,7 @@ simu.cfi.ci <- function(pop.model, sat.model, path.model.list, sample.size, rep.
   
   for(j in 1:rep.num){
     ci.matrix <- matrix(nrow=num.fit.indices, ncol=num.path.mod)
-    colnames(ci.matrix) <-paste("path.mod", 0:(num.path.mod-1), sep="")
+    colnames(ci.matrix) <-paste("path.mod", 1:(num.path.mod), sep="")
     rownames(ci.matrix) <- c("cfi.ci.lower.adj.str.exp",
                              "cfi.ci.upper.adj.str.exp",
                              "cfi.ci.lower.adj.str.exp.tri",

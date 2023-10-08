@@ -8,11 +8,11 @@ fit1 <- sem(pop.mod, data=Data)
 Sigma<-lavInspect(fit1,"cov.lv")
 
 lavInspect(fit1,"est")$psi
-mod.list <- list(path.mod0, path.mod1, path.mod2, path.mod3,path.mod4,path.mod5)
+mod.list <- list(path.mod1, path.mod2, path.mod3, path.mod4,path.mod5,path.mod6)
 
 pop.fit.mod.orig <- matrix(NA, nrow=3, ncol=length(mod.list))
 rownames(pop.fit.mod.orig) <- c("pop.rmsea", "pop.cfi", "pop.srmr")
-colnames(pop.fit.mod.orig) <- paste("path.mod", 0:(length(mod.list)-1), sep="")
+colnames(pop.fit.mod.orig) <- paste("path.mod", 1:length(mod.list), sep="")
 
 for(i in 1:length(mod.list)){
   fit2 <- sem(mod.list[[i]], sample.cov = Sigma, sample.nobs = 10000000, likelihood = "wishart")
