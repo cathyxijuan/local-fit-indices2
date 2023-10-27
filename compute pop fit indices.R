@@ -1,13 +1,14 @@
 source("models original.R")
+source("models high reliable.R")
 
 
-### calculate true population SRMR ###
+### calculate true population fit indices ###
 
-Data<-simulateData(pop.mod,sample.nobs = 10000)
+Data<-simulateData(pop.mod,sample.nobs = 100000)
 fit1 <- sem(pop.mod, data=Data)
 Sigma<-lavInspect(fit1,"cov.lv")
 
-lavInspect(fit1,"est")$psi
+#lavInspect(fit1,"est") #it outputs all the parameters set in the pop.mod
 mod.list <- list(path.mod1, path.mod2, path.mod3, path.mod4,path.mod5,path.mod6)
 
 pop.fit.mod.orig <- matrix(NA, nrow=3, ncol=length(mod.list))
@@ -37,8 +38,8 @@ pop.indices
 
 save(pop.indices, file="pop.indices.RData")
 
+#            path.mod1 path.mod2 path.mod3 path.mod4 path.mod5 path.mod6
+#pop.rmsea         0   0.06851   0.15424   0.15787   0.18743   0.20661
+#pop.cfi           1   0.99004   0.94954   0.93959   0.91484   0.88359
+#pop.srmr          0   0.02407   0.04240   0.05346   0.06002   0.07077
 
-#          path.mod0  path.mod1  path.mod2 path.mod3 path.mod4  path.mod5
-#pop.rmsea 1.720638e-08 0.06851110 0.15423663 0.1874318 0.1578682 0.20660795
-#pop.cfi   1.000000e+00 0.99004460 0.94954412 0.9148440 0.9395887 0.88359401
-#pop.srmr  2.085630e-08 0.02406553 0.04239781 0.0600216 0.0534605 0.07077444

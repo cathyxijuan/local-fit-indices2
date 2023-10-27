@@ -26,8 +26,9 @@ struct.path <- c("eta1~~eta1","eta1~~eta2", "eta1~~eta3", "xi1~~eta1", "xi2~~eta
                  "xi4~~eta2" , "eta3~~eta3" ,"xi1~~eta3",  "xi2~~eta3" , "xi3~~eta3" , "xi4~~eta3", 
                  "xi1~~xi1" ,  "xi1~~xi2" ,  "xi1~~xi3",   "xi1~~xi4" ,  "xi2~~xi2" ,  "xi2~~xi3"  ,
                  "xi2~~xi4" ,  "xi3~~xi3" ,  "xi3~~xi4"  , "xi4~~xi4"  ) #the order of these names match the one for fit2 
-fit1@Options$h1.information = "unstructured" 
+fit1@Options$h1.information = "structured" 
 W1.unstr.invert <- lavInspect(fit1, "inverted.information.observed")[struct.path, struct.path]
+
 
 V1.unstr <- lavInspect(fit1, "information.first.order")[struct.path, struct.path]
 #Note: W1.unstr.invert and V1.unstr should be the similar under normal data
