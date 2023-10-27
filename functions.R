@@ -36,7 +36,7 @@ rmse <- function(simu.list, pop.matrix){
     sqr.dif  <- subtr.pop ^2
     exp.val <- apply( sqr.dif, 1:2, mean, na.rm=T)
     sqrt.val  <- sqrt(exp.val)
-    round(sqrt.val,4)
+    round(sqrt.val,9)
   } else{
     simu.list <- simu.list[!(sapply(simu.list, is.null))]
     to.array <- simplify2array(simu.list)
@@ -44,7 +44,7 @@ rmse <- function(simu.list, pop.matrix){
     sqr.dif  <- subtr.pop ^2
     exp.val <- apply( sqr.dif, 1:2, mean, na.rm=T)
     sqrt.val  <- sqrt(exp.val)
-    round(sqrt.val ,4)
+    round(sqrt.val ,9)
   }
 }
   
@@ -269,7 +269,8 @@ srmr.adj.old.ci <- function(fit, structured=T){
 
 
 
-##Purpose: compute the adjust constant for the hypothesized model for computing RMSEA and CFI
+##Purpose: compute the adjust constant for the hypothesized model for computing RMSEA and CFI.
+## PLEASE NOTE THAT IN THE PAPER, the adjustment constant is c.adj.val/df.
 ##Argument:
 ## 1) fit: the SEM fit from step 2
 ## 2) gamma: a gamma matrix computed using fit1 in step 1; can either be triple product or not
@@ -616,7 +617,7 @@ simu.fit <- function(pop.model, sat.model, path.model.list, sample.size, rep.num
       } else{
         #compute gamma
         fit1@Options$h1.information = "structured" 
-        W1.unstr.invert <- lavInspect(fit1, "inverted.information.observed")[struct.path, struct.path]
+        W1.unstr.invert <- lavInspect(fit1, "inverted.information.expected")[struct.path, struct.path]
         V1.unstr <- lavInspect(fit1, "information.first.order")[struct.path, struct.path]
         Gamma.tri <- W1.unstr.invert%*%V1.unstr%*%W1.unstr.invert
         Gamma <- W1.unstr.invert
@@ -775,8 +776,8 @@ simu.component <- function(pop.model, sat.model, path.model.list, sample.size, r
         print(j)
       } else{
         #compute gamma
-        fit1@Options$h1.information = "unstructured" 
-        W1.unstr.invert <- lavInspect(fit1, "inverted.information.observed")[struct.path, struct.path]
+        fit1@Options$h1.information = "structured" 
+        W1.unstr.invert <- lavInspect(fit1, "inverted.information.expected")[struct.path, struct.path]
         V1.unstr <- lavInspect(fit1, "information.first.order")[struct.path, struct.path]
         Gamma.tri <- W1.unstr.invert%*%V1.unstr%*%W1.unstr.invert
         Gamma <- W1.unstr.invert
@@ -841,7 +842,7 @@ simu.component <- function(pop.model, sat.model, path.model.list, sample.size, r
 #sample.size: sample size in the condition
 #rep.num: number of repetitions for the stimulation study. 
 simu.rmsea.ci <- function(pop.model, sat.model, path.model.list, sample.size, rep.num){
-  num.fit.indices <- 6
+  num.fit.indices <- 10
   num.path.mod <- length(path.model.list)
   
   ci.list <- vector(mode="list", length=rep.num)
@@ -856,8 +857,12 @@ simu.rmsea.ci <- function(pop.model, sat.model, path.model.list, sample.size, re
     colnames(ci.matrix) <-paste("path.mod", 1:(num.path.mod), sep="")
     rownames(ci.matrix) <- c("rmsea.ci.lower.default",
                              "rmsea.ci.upper.default", 
+                             "rmsea.ci.lower.adj.unstr",
+                             "rmsea.ci.upper.adj.unstr",
                              "rmsea.ci.lower.adj.str.exp",
                              "rmsea.ci.upper.adj.str.exp",
+                             "rmsea.ci.lower.adj.unstr.tri",
+                             "rmsea.ci.upper.adj.unstr.tri",
                              "rmsea.ci.lower.adj.str.exp.tri",
                              "rmsea.ci.upper.adj.str.exp.tri")
     
@@ -872,7 +877,7 @@ simu.rmsea.ci <- function(pop.model, sat.model, path.model.list, sample.size, re
       } else{
         #compute gamma
         fit1@Options$h1.information = "structured" 
-        W1.unstr.invert <- lavInspect(fit1, "inverted.information.observed")[struct.path, struct.path]
+        W1.unstr.invert <- lavInspect(fit1, "inverted.information.expected")[struct.path, struct.path]
         V1.unstr <- lavInspect(fit1, "information.first.order")[struct.path, struct.path]
         Gamma.tri <- W1.unstr.invert%*%V1.unstr%*%W1.unstr.invert
         Gamma <- W1.unstr.invert
@@ -883,7 +888,7 @@ simu.rmsea.ci <- function(pop.model, sat.model, path.model.list, sample.size, re
           fit2 <- sem(path.model.list[[i]], 
                       sample.cov = sat.struct.cov, 
                       sample.nobs = sample.size, 
-                      likelihood = "wishart")
+                      likelihood = "wishart",check.vcov = FALSE)
           df <- lavInspect(fit2, "fit")["df"]
           
           
@@ -893,33 +898,51 @@ simu.rmsea.ci <- function(pop.model, sat.model, path.model.list, sample.size, re
           rmsea.ci.default <- lavInspect(fit2, "fit")[c("rmsea.ci.lower",
                                                         "rmsea.ci.upper")]
           
-          c.adj <- c.adj.val(fit2, gamma=Gamma, structured=T, expected=T)/df
-          fit.sample.adj <- sem(path.model.list[[i]], 
-                                sample.cov = sat.struct.cov, 
-                                sample.nobs = sample.size/c.adj, 
-                                likelihood = "wishart", start=fit2)
-          rmsea.ci.adj.str.exp <- lavInspect(fit.sample.adj, "fit")[c("rmsea.ci.lower",
-                                                                      "rmsea.ci.upper")]
+          c.adj.unstr <- c.adj.val(fit2, Gamma, structured = F)/df #note that in the paper, c=c.adj/df
           
+          fit.sample.adj.unstr <- sem(path.model.list[[i]], 
+                                      sample.cov = sat.struct.cov, 
+                                      sample.nobs = (sample.size-1)/c.adj.unstr+1, 
+                                      likelihood = "wishart", start=fit2,check.vcov = FALSE)
+          rmsea.ci.adj.unstr <- lavInspect(fit.sample.adj.unstr, "fit")[c("rmsea.ci.lower",
+                                                                          "rmsea.ci.upper")]
           
+          c.adj.str.exp <- c.adj.val(fit2, gamma=Gamma, structured=T, expected=T)/df
+          fit.sample.adj.str.exp <- sem(path.model.list[[i]], 
+                                        sample.cov = sat.struct.cov, 
+                                        sample.nobs = (sample.size-1)/c.adj.str.exp+1, 
+                                        likelihood = "wishart", start=fit2,check.vcov = FALSE)
+          rmsea.ci.adj.str.exp <- lavInspect( fit.sample.adj.str.exp, "fit")[c("rmsea.ci.lower",
+                                                                               "rmsea.ci.upper")]
           
-          c.adj.tri <- c.adj.val(fit2, gamma=Gamma.tri, structured=T, expected=T)/df
-          fit.sample.adj.tri <- sem(path.model.list[[i]], 
-                                sample.cov = sat.struct.cov, 
-                                sample.nobs = (sample.size-1)/c.adj.tri+1, 
-                                likelihood = "wishart", start=fit2)
-          rmsea.ci.adj.str.exp.tri <- lavInspect(fit.sample.adj.tri, 
+          c.adj.unstr.tri <- c.adj.val(fit2, gamma=Gamma.tri, structured=F)/df
+          fit.sample.adj.unstr.tri <- sem(path.model.list[[i]], 
+                                          sample.cov = sat.struct.cov, 
+                                          sample.nobs = (sample.size-1)/c.adj.unstr.tri+1, 
+                                          likelihood = "wishart", start=fit2,check.vcov = FALSE)
+          rmsea.ci.adj.unstr.tri <- lavInspect(fit.sample.adj.unstr.tri, "fit")[c("rmsea.ci.lower",
+                                                                                  "rmsea.ci.upper")]
+          
+          c.adj.str.exp.tri <- c.adj.val(fit2, gamma=Gamma.tri, structured=T, expected=T)/df
+          fit.sample.adj.str.exp.tri <- sem(path.model.list[[i]], 
+                                            sample.cov = sat.struct.cov, 
+                                            sample.nobs = (sample.size-1)/c.adj.str.exp.tri+1,
+                                            likelihood = "wishart", start=fit2,check.vcov = FALSE)
+          rmsea.ci.adj.str.exp.tri <- lavInspect(fit.sample.adj.str.exp.tri, 
                                                  "fit")[c("rmsea.ci.lower", 
                                                           "rmsea.ci.upper")]
+          
           rmsea.ci.all <- c(rmsea.ci.default, 
+                            rmsea.ci.adj.unstr,
                             rmsea.ci.adj.str.exp,
+                            rmsea.ci.adj.unstr.tri,
                             rmsea.ci.adj.str.exp.tri)
 
           ci.matrix[,i] <-   rmsea.ci.all
           
         }
         
-        ci.matrix <- round(ci.matrix, 8)
+        ci.matrix <- round(ci.matrix, 9)
         ci.list[[j]] <- ci.matrix
         print(j)
         
@@ -941,7 +964,7 @@ simu.rmsea.ci <- function(pop.model, sat.model, path.model.list, sample.size, re
 #sample.size: sample size in the condition
 #rep.num: number of repetitions for the stimulation study. 
 simu.srmr.ci <- function(pop.model, sat.model, path.model.list, sample.size, rep.num){
-  num.fit.indices <- 6
+  num.fit.indices <- 12
   num.path.mod <- length(path.model.list)
   
   ci.list <- vector(mode="list", length=rep.num)
@@ -954,10 +977,16 @@ simu.srmr.ci <- function(pop.model, sat.model, path.model.list, sample.size, rep
   for(j in 1:rep.num){
     ci.matrix <- matrix(nrow=num.fit.indices, ncol=num.path.mod)
     colnames(ci.matrix) <-paste("path.mod", 1:(num.path.mod), sep="")
-    rownames(ci.matrix) <- c("srmr.ci.lower.default",
-                             "srmr.ci.upper.default", 
+    rownames(ci.matrix) <- c("srmr.ci.lower.default.adj.unstr",
+                             "srmr.ci.upper.default.adj.unstr",
+                             "srmr.ci.lower.default.adj.str",
+                             "srmr.ci.upper.default.adj.str", 
+                             "srmr.ci.lower.adj.unstr",
+                             "srmr.ci.upper.adj.unstr",
                              "srmr.ci.lower.adj.str.exp",
-                             "srmr.ci.upper.adj.str.exp",
+                             "srmr.ci.upper.adj.str.exp", 
+                             "srmr.ci.lower.adj.unstr.tri",
+                             "srmr.ci.upper.adj.unstr.tri",
                              "srmr.ci.lower.adj.str.exp.tri",
                              "srmr.ci.upper.adj.str.exp.tri")
     
@@ -972,7 +1001,7 @@ simu.srmr.ci <- function(pop.model, sat.model, path.model.list, sample.size, rep
       } else{
         #compute gamma
         fit1@Options$h1.information = "structured" 
-        W1.unstr.invert <- lavInspect(fit1, "inverted.information.observed")[struct.path, struct.path]
+        W1.unstr.invert <- lavInspect(fit1, "inverted.information.expected")[struct.path, struct.path]
         V1.unstr <- lavInspect(fit1, "information.first.order")[struct.path, struct.path]
         Gamma.tri <- W1.unstr.invert%*%V1.unstr%*%W1.unstr.invert
         Gamma <- W1.unstr.invert
@@ -988,14 +1017,18 @@ simu.srmr.ci <- function(pop.model, sat.model, path.model.list, sample.size, rep
           
           
           #compute fit indices
-          srmr.ci.default <- srmr.adj.old.ci(fit2)
+          srmr.ci.default.adj.unstr <- srmr.adj.old.ci(fit2,structured = F)
+          srmr.ci.default.adj.str <- srmr.adj.old.ci(fit2)
+          srmr.ci.adj.unstr <- srmr.adj.ci(fit2, gamma=Gamma, structured = F)
+            srmr.ci.adj.str.exp <- srmr.adj.ci(fit2, gamma=Gamma)
+            srmr.ci.adj.unstr.tri <- srmr.adj.ci(fit2, gamma=Gamma.tri, structured = F)
+            srmr.ci.adj.str.exp.tri <- srmr.adj.ci(fit2, gamma=Gamma.tri)
             
-            srmr.ci.adj.str.exp <- srmr.adj.ci(fit2, Gamma)
-            
-            srmr.ci.adj.str.exp.tri <- srmr.adj.ci(fit2, Gamma.tri)
-            
-            srmr.ci.all <- c(srmr.ci.default, 
+            srmr.ci.all <- c(srmr.ci.default.adj.unstr,
+                             srmr.ci.default.adj.str,
+                             srmr.ci.adj.unstr,
                              srmr.ci.adj.str.exp,
+                             srmr.ci.adj.unstr.tri,
                              srmr.ci.adj.str.exp.tri)
           
           ci.matrix[,i] <-   srmr.ci.all
@@ -1059,7 +1092,7 @@ simu.srmr.ci.check.val <- function(pop.model, sat.model, path.model.list, sample
       } else{
         #compute gamma
         fit1@Options$h1.information = "structured" 
-        W1.unstr.invert <- lavInspect(fit1, "inverted.information.observed")[struct.path, struct.path]
+        W1.unstr.invert <- lavInspect(fit1, "inverted.information.expected")[struct.path, struct.path]
         V1.unstr <- lavInspect(fit1, "information.first.order")[struct.path, struct.path]
         Gamma.tri <- W1.unstr.invert%*%V1.unstr%*%W1.unstr.invert
         Gamma <- W1.unstr.invert
@@ -1117,7 +1150,7 @@ simu.srmr.ci.check.val <- function(pop.model, sat.model, path.model.list, sample
 #sample.size: sample size in the condition
 #rep.num: number of repetitions for the stimulation study. 
 simu.cfi.ci <- function(pop.model, sat.model, path.model.list, sample.size, rep.num){
-  num.fit.indices <- 4
+  num.fit.indices <- 8
   num.path.mod <- length(path.model.list)
   
   ci.list <- vector(mode="list", length=rep.num)
@@ -1130,8 +1163,12 @@ simu.cfi.ci <- function(pop.model, sat.model, path.model.list, sample.size, rep.
   for(j in 1:rep.num){
     ci.matrix <- matrix(nrow=num.fit.indices, ncol=num.path.mod)
     colnames(ci.matrix) <-paste("path.mod", 1:(num.path.mod), sep="")
-    rownames(ci.matrix) <- c("cfi.ci.lower.adj.str.exp",
+    rownames(ci.matrix) <- c("cfi.ci.lower.adj.unstr",
+                             "cfi.ci.upper.adj.unstr",
+                             "cfi.ci.lower.adj.str.exp",
                              "cfi.ci.upper.adj.str.exp",
+                             "cfi.ci.lower.adj.unstr.tri",
+                             "cfi.ci.upper.adj.unstr.tri",
                              "cfi.ci.lower.adj.str.exp.tri",
                              "cfi.ci.upper.adj.str.exp.tri")
     
@@ -1146,7 +1183,7 @@ simu.cfi.ci <- function(pop.model, sat.model, path.model.list, sample.size, rep.
       } else{
         #compute gamma
         fit1@Options$h1.information = "structured" 
-        W1.unstr.invert <- lavInspect(fit1, "inverted.information.observed")[struct.path, struct.path]
+        W1.unstr.invert <- lavInspect(fit1, "inverted.information.expected")[struct.path, struct.path]
         V1.unstr <- lavInspect(fit1, "information.first.order")[struct.path, struct.path]
         Gamma.tri <- W1.unstr.invert%*%V1.unstr%*%W1.unstr.invert
         Gamma <- W1.unstr.invert
@@ -1162,12 +1199,16 @@ simu.cfi.ci <- function(pop.model, sat.model, path.model.list, sample.size, rep.
           
           
           #compute fit indices
+          cfi.ci.adj.unstr <- cfi.adj.ci(fit2, Gamma, structured=T)
           
           cfi.ci.adj.str.exp <- cfi.adj.ci(fit2, Gamma)
+          cfi.ci.adj.unstr.tri <- cfi.adj.ci(fit2, Gamma.tri)
           
           cfi.ci.adj.str.exp.tri <- cfi.adj.ci(fit2, Gamma.tri)
           
-          cfi.ci.all <- c(cfi.ci.adj.str.exp, 
+          cfi.ci.all <- c(   cfi.ci.adj.unstr,
+                             cfi.ci.adj.str.exp, 
+                             cfi.ci.adj.unstr.tri,
                           cfi.ci.adj.str.exp.tri )
           
           ci.matrix[,i] <-   cfi.ci.all
@@ -1190,23 +1231,62 @@ simu.cfi.ci <- function(pop.model, sat.model, path.model.list, sample.size, rep.
 ##Arguments:
 ##### 1) pop.indices: a numeric vector that contains the population values of the fit indices.
 ##### 2) ci.data.list: a list of confidence intervals from the simulation. 
-ci.coverage <- function(pop.indices, ci.data.list){
+ci.coverage.rmsea <- function(pop.indices, ci.data.list){
   ci.check <- list()
   ci.data <- remove.null(ci.data.list)
   simu.num <- length(ci.data)
   for(i in 1:simu.num){
     ci <- ci.data[[i]]
     ci.default <- ci[1,] <= pop.indices &pop.indices <=ci[2,]
-    ci.adj.str.exp <- ci[3,] <= pop.indices &pop.indices <=ci[4,]
-    ci.adj.str.exp.tri <- ci[5,] <= pop.indices &pop.indices <=ci[6,]
+    ci.adj.unstr <- ci[3,] <= pop.indices &pop.indices <=ci[4,]
+    ci.adj.str.exp <- ci[5,] <= pop.indices &pop.indices <=ci[6,]
+    ci.adj.unstr.tri <- ci[7,] <= pop.indices &pop.indices <=ci[8,]
+    ci.adj.str.exp.tri <- ci[9,] <= pop.indices &pop.indices <=ci[10,]
     ci.check[[i]] <- rbind(ci.default,
+                           ci.adj.unstr,
                            ci.adj.str.exp,
+                           ci.adj.unstr.tri,
                            ci.adj.str.exp.tri)
   }
   
   list.mean(ci.check)
   
 }
+
+
+
+
+
+##Purpose: compute the coverage rate of the confidence intervals from the simulation study. 
+##Arguments:
+##### 1) pop.indices: a numeric vector that contains the population values of the fit indices.
+##### 2) ci.data.list: a list of confidence intervals from the simulation. 
+ci.coverage.srmr <- function(pop.indices, ci.data.list){
+  ci.check <- list()
+  ci.data <- remove.null(ci.data.list)
+  simu.num <- length(ci.data)
+  for(i in 1:simu.num){
+    ci <- ci.data[[i]]
+    ci.default.unstr <- ci[1,] <= pop.indices &pop.indices <=ci[2,]
+    ci.default.str <- ci[3,] <= pop.indices &pop.indices <=ci[4,]
+    ci.adj.unstr <- ci[5,] <= pop.indices &pop.indices <=ci[6,]
+    ci.adj.str.exp <- ci[7,] <= pop.indices &pop.indices <=ci[8,]
+    ci.adj.unstr.tri <- ci[9,] <= pop.indices &pop.indices <=ci[10,]
+    ci.adj.str.exp.tri <- ci[11,] <= pop.indices &pop.indices <=ci[12,]
+    ci.check[[i]] <- rbind(ci.default.unstr,
+                           ci.default.str,
+                           ci.adj.unstr,
+                           ci.adj.str.exp,
+                           ci.adj.unstr.tri,
+                           ci.adj.str.exp.tri)
+  }
+  
+  list.mean(ci.check)
+  
+}
+
+
+
 
 
 
@@ -1221,9 +1301,13 @@ ci.coverage.cfi <- function(pop.indices, ci.data.list){
   simu.num <- length(ci.data)
   for(i in 1:simu.num){
     ci <- ci.data[[i]]
-    ci.adj.str.exp <- ci[1,] <= pop.indices &pop.indices <=ci[2,]
-    ci.adj.str.exp.tri <- ci[3,] <= pop.indices &pop.indices <=ci[4,]
-    ci.check[[i]] <- rbind(ci.adj.str.exp,
+    ci.adj.unstr <- ci[1,] <= pop.indices &pop.indices <=ci[2,]
+    ci.adj.str.exp <- ci[3,] <= pop.indices &pop.indices <=ci[4,]
+    ci.adj.unstr.tri <- ci[5,] <= pop.indices &pop.indices <=ci[6,]
+    ci.adj.str.exp.tri <- ci[7,] <= pop.indices &pop.indices <=ci[8,]
+    ci.check[[i]] <- rbind(ci.adj.unstr,
+                           ci.adj.str.exp,
+                           ci.adj.unstr.tri,
                            ci.adj.str.exp.tri)
   }
   
@@ -1238,17 +1322,21 @@ ci.coverage.cfi <- function(pop.indices, ci.data.list){
 ##Arguments:
 ##### 1) pop.indices: a numeric vector that contains the population values of the fit indices.
 ##### 2) ci.data.list: a list of confidence intervals from the simulation. 
-missing.rate.below <- function(pop.indices, ci.data.list){
+missing.rate.below.rmsea <- function(pop.indices, ci.data.list){
   ci.check <- list()
   ci.data <- remove.null(ci.data.list)
   simu.num <- length(ci.data)
   for(i in 1:simu.num){
     ci <- ci.data[[i]]
-    ci.default <- ci[1,] >= pop.indices 
-    ci.adj.str.exp <- ci[3,] >= pop.indices 
-    ci.adj.str.exp.tri <- ci[5,] >= pop.indices 
+    ci.default <- ci[1,] >= pop.indices
+    ci.adj.unstr <- ci[3,] >= pop.indices 
+    ci.adj.str.exp <- ci[5,] >= pop.indices 
+    ci.adj.unstr.tri <- ci[7,] >= pop.indices 
+    ci.adj.str.exp.tri <- ci[9,] >= pop.indices 
     ci.check[[i]] <- rbind(ci.default,
+                           ci.adj.unstr,
                            ci.adj.str.exp,
+                           ci.adj.unstr.tri,
                            ci.adj.str.exp.tri)
   }
   
@@ -1263,17 +1351,21 @@ missing.rate.below <- function(pop.indices, ci.data.list){
 ##Arguments:
 ##### 1) pop.indices: a numeric vector that contains the population values of the fit indices.
 ##### 2) ci.data.list: a list of confidence intervals from the simulation. 
-missing.rate.above <- function(pop.indices, ci.data.list){
+missing.rate.above.rmsea <- function(pop.indices, ci.data.list){
   ci.check <- list()
   ci.data <- remove.null(ci.data.list)
   simu.num <- length(ci.data)
   for(i in 1:simu.num){
     ci <- ci.data[[i]]
     ci.default <- pop.indices >=ci[2,]
-    ci.adj.str.exp <- pop.indices >=ci[4,]
-    ci.adj.str.exp.tri <- pop.indices >=ci[6,]
+    ci.adj.unstr <- pop.indices >=ci[4,]
+    ci.adj.str.exp <- pop.indices >=ci[6,]
+    ci.adj.unstr.tri <- pop.indices >=ci[8,]
+    ci.adj.str.exp.tri <- pop.indices >=ci[10,]
     ci.check[[i]] <- rbind(ci.default,
+                           ci.adj.unstr,
                            ci.adj.str.exp,
+                           ci.adj.unstr.tri,
                            ci.adj.str.exp.tri)
   }
   
@@ -1295,10 +1387,15 @@ missing.rate.below.cfi <- function(pop.indices, ci.data.list){
   simu.num <- length(ci.data)
   for(i in 1:simu.num){
     ci <- ci.data[[i]]
-    ci.adj.str.exp <- ci[1,] >= pop.indices 
-    ci.adj.str.exp.tri <- ci[3,] >= pop.indices 
-    ci.check[[i]] <- rbind(ci.adj.str.exp,
-                           ci.adj.str.exp.tri)
+    ci.adj.unstr <- ci[1,] >= pop.indices
+    ci.adj.str.exp <- ci[3,] >= pop.indices 
+    ci.adj.unstr.tri <- ci[5,] >= pop.indices 
+    ci.adj.str.exp.tri <- ci[7,] >= pop.indices 
+    ci.check[[i]] <- 
+      rbind(ci.adj.unstr,
+            ci.adj.str.exp, 
+            ci.adj.unstr.tri,
+            ci.adj.str.exp.tri)
   }
   
   list.mean(ci.check)
@@ -1318,9 +1415,45 @@ missing.rate.above.cfi <- function(pop.indices, ci.data.list){
   simu.num <- length(ci.data)
   for(i in 1:simu.num){
     ci <- ci.data[[i]]
-    ci.adj.str.exp <- pop.indices >=ci[2,]
-    ci.adj.str.exp.tri <- pop.indices >=ci[4,]
-    ci.check[[i]] <- rbind(ci.adj.str.exp,
+    ci.adj.unstr <- pop.indices >=ci[2,]
+    ci.adj.str.exp <- pop.indices >=ci[4,]
+    ci.adj.unstr.tri <- pop.indices >=ci[6,]
+    ci.adj.str.exp.tri <- pop.indices >=ci[8,]
+    ci.check[[i]] <- 
+      rbind(ci.adj.unstr,
+            ci.adj.str.exp, 
+            ci.adj.unstr.tri,
+            ci.adj.str.exp.tri)
+  }
+  
+  list.mean(ci.check)
+  
+}
+
+
+
+
+##Purpose: compute the confidence interval's missing rate from below (i.e., the population value is lower than the lower bound of the CI)
+##Arguments:
+##### 1) pop.indices: a numeric vector that contains the population values of the fit indices.
+##### 2) ci.data.list: a list of confidence intervals from the simulation. 
+missing.rate.below.srmr <- function(pop.indices, ci.data.list){
+  ci.check <- list()
+  ci.data <- remove.null(ci.data.list)
+  simu.num <- length(ci.data)
+  for(i in 1:simu.num){
+    ci <- ci.data[[i]]
+    ci.default.unstr <- ci[1,] >= pop.indices
+    ci.default.str <- ci[3,] >= pop.indices
+    ci.adj.unstr <- ci[5,] >= pop.indices 
+    ci.adj.str.exp <- ci[7,] >= pop.indices 
+    ci.adj.unstr.tri <- ci[9,] >= pop.indices 
+    ci.adj.str.exp.tri <- ci[11,] >= pop.indices 
+    ci.check[[i]] <- rbind(ci.default.unstr,
+                           ci.default.str,
+                           ci.adj.unstr,
+                           ci.adj.str.exp,
+                           ci.adj.unstr.tri,
                            ci.adj.str.exp.tri)
   }
   
@@ -1328,3 +1461,33 @@ missing.rate.above.cfi <- function(pop.indices, ci.data.list){
   
 }
 
+
+
+
+##Purpose: compute the confidence interval's missing rate from above (i.e., the population value is higher than the upper bound of the CI)
+##Arguments:
+##### 1) pop.indices: a numeric vector that contains the population values of the fit indices.
+##### 2) ci.data.list: a list of confidence intervals from the simulation. 
+missing.rate.above.srmr <- function(pop.indices, ci.data.list){
+  ci.check <- list()
+  ci.data <- remove.null(ci.data.list)
+  simu.num <- length(ci.data)
+  for(i in 1:simu.num){
+    ci <- ci.data[[i]]
+    ci.default.str <- pop.indices >=ci[2,]
+    ci.default.unstr <- pop.indices >=ci[4,]
+    ci.adj.unstr <- pop.indices >=ci[6,]
+    ci.adj.str.exp <- pop.indices >=ci[8,]
+    ci.adj.unstr.tri <- pop.indices >=ci[10,]
+    ci.adj.str.exp.tri <- pop.indices >=ci[12,]
+    ci.check[[i]] <- rbind(ci.default.unstr,
+                           ci.default.str,
+                           ci.adj.unstr,
+                           ci.adj.str.exp,
+                           ci.adj.unstr.tri,
+                           ci.adj.str.exp.tri)
+  }
+  
+  list.mean(ci.check)
+  
+}
