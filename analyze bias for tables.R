@@ -2,7 +2,6 @@ source("functions.R")
 load("pop.indices.RData")
 
 load("fit.mod.orig.n150.RData")
-
 load("fit.mod.orig.n200.RData")
 load("fit.mod.orig.n300.RData")
 load("fit.mod.orig.n500.RData")
@@ -33,11 +32,22 @@ for(i in 1:length(means.orig.mod)){
 bias.orig.mod 
 
 
+rmsea200 <- bias.orig.mod$n200[1:7,]
+apply(rmsea200,2,  function(x) which.max(abs(x)) )
+apply(rmsea200,2,  function(x) which.min(abs(x))-1 )
+
+rmsea500 <- bias.orig.mod$n500[1:7,]
+apply(rmsea500,2,  function(x) which.min(abs(x))-1 )
+
+rmsea800 <- bias.orig.mod$n800[1:7,]
+apply(rmsea800,2,  function(x) which.min(abs(x))-1 )
+apply(rmsea800,2,  function(x) which.max(abs(x)) )
 
 
 srmr200 <- bias.orig.mod$n200[15:23,]
 
 apply(srmr200,2,  function(x) which.min(abs(x))-3 )
+apply(srmr200,2,  function(x) which.max(abs(x)) )
 
 srmr500 <- bias.orig.mod$n500[15:23,]
 
@@ -47,7 +57,7 @@ apply(srmr500,2,  function(x) which.max(abs(x)) )
 srmr800 <- bias.orig.mod$n800[15:23,]
 
 apply(srmr800,2,  function(x) which.min(abs(x))-3 )
-
+apply(srmr800,2,  function(x) which.max(abs(x)) )
 
 cfi200 <- bias.orig.mod$n200[8:14,]
 
@@ -125,7 +135,9 @@ srmr200 <- bias.high.mod$n200[15:23,]
 
 apply(srmr200,2,  function(x) which.min(abs(x))-3 )
 apply(srmr200,2,  function(x) which.max(abs(x)) )
-
+which.min(abs(srmr200[,2]))
+str(srmr200)
+srmr200[,2]
 
 srmr500 <- bias.high.mod$n500[15:23,]
 

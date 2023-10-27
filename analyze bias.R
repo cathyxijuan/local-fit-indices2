@@ -73,33 +73,3 @@ save(bias.high.mod, file="bias.high.mod.RData")
 
 
 
-# ##low reliability
-# 
-# load("fit.mod.low.n150.RData")
-# load("fit.mod.low.n200.RData")
-# load("fit.mod.low.n300.RData")
-# load("fit.mod.low.n500.RData")
-# load("fit.mod.low.n800.RData")
-# load("fit.mod.low.n1000.RData")
-# 
-# 
-# 
-# 
-# 
-# 
-# means.low.mod <- list("n150"=list.mean(fit.mod.low.n150),
-#                       "n200"=list.mean(fit.mod.low.n200),
-#                       "n300"=list.mean(fit.mod.low.n300),
-#                       "n500"=list.mean(fit.mod.low.n500),
-#                       "n800"=list.mean(fit.mod.low.n800),
-#                       "n1000"=list.mean(fit.mod.low.n1000))
-# 
-# bias.low.mod <- vector(mode="list")
-# 
-# for(i in 1:length(means.low.mod)){
-#   bias.low.mod[[names(means.low.mod)[i]]] <- 
-#     round(means.low.mod[[i]] - pop.indices, 4)
-# }
-# 
-# bias.low.mod
-# save(bias.low.mod, file="bias.low.mode.RData")

@@ -52,26 +52,3 @@ save(rmse.high.mod, file="rmse.high.mod.RData")
 
 
 
-##low reliability
-
-load("fit.mod.low.n150.RData")
-load("fit.mod.low.n200.RData")
-load("fit.mod.low.n300.RData")
-load("fit.mod.low.n500.RData")
-load("fit.mod.low.n800.RData")
-load("fit.mod.low.n1000.RData")
-
-
-
-
-
-
-rmse.low.mod <- list("n150"=rmse(fit.mod.low.n150,pop.indices),
-                   "n200"=rmse(fit.mod.low.n200,pop.indices),
-                   "n300"=rmse(fit.mod.low.n300,pop.indices),
-                   "n500"=rmse(fit.mod.low.n500,pop.indices),
-                   "n800"=rmse(fit.mod.low.n800,pop.indices),
-                   "n1000"=rmse(fit.mod.low.n1000,pop.indices))
-
-rmse.low.mod
-save(rmse.low.mod, file="rmse.low.mod.RData")
