@@ -62,6 +62,8 @@ rmsea.ci.orig.mod.missing.above <-
 rmsea.ci.orig.mod.missing.above
 save(rmsea.ci.orig.mod.missing.above, file="rmsea.ci.orig.mod.missing.above.RData")
 
+
+
 rmsea.ci.high.mod.missing.below <- 
   list("n150"=missing.rate.below.rmsea(pop.rmsea, rmsea.ci.mod.high.n150),
        "n200"=missing.rate.below.rmsea(pop.rmsea, rmsea.ci.mod.high.n200),

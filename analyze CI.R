@@ -49,6 +49,8 @@ rmsea.ci.orig.mod <- list("n150"=ci.coverage.rmsea(pop.rmsea, rmsea.ci.mod.orig.
                           "n1000"=ci.coverage.rmsea(pop.rmsea, rmsea.ci.mod.orig.n1000))
 
 rmsea.ci.orig.mod
+
+
 save(rmsea.ci.orig.mod, file="rmsea.ci.orig.mod.RData")
 
 
@@ -97,6 +99,8 @@ srmr.ci.high.mod <- list("n150"=ci.coverage.srmr(pop.srmr, srmr.ci.mod.high.n150
 
 srmr.ci.high.mod
 save(srmr.ci.high.mod, file="srmr.ci.high.mod.RData")
+
+
 
 pop.cfi <- pop.indices["pop.cfi",]
 cfi.ci.orig.mod <- list("n150"=ci.coverage.cfi(pop.cfi, cfi.ci.mod.orig.n150),
