@@ -65,8 +65,7 @@ srmr <- rmse.high.mod$n200[15:nrow(rmse.high.mod$n200), ]
 apply(srmr,2,  function(x) which.min(abs(x))-3 )
 apply(srmr,2,  function(x) which.max(abs(x))-3 )
 
-0.9-0.025
-0.9+0.025
+
 
 0.9-0.03
 0.9+0.03

@@ -60,16 +60,20 @@ apply(srmr800,2,  function(x) which.min(abs(x))-3 )
 apply(srmr800,2,  function(x) which.max(abs(x)) )
 
 cfi200 <- bias.orig.mod$n200[8:14,]
+apply(cfi200,2,  function(x) which.max(abs(x)) )
 
 apply(cfi200,2,  function(x) which.min(abs(x))-1 )
 
 cfi500 <- bias.orig.mod$n500[8:14,]
+apply(cfi500,2,  function(x) which.max(abs(x)) )
+
 
 apply(cfi500,2,  function(x) which.min(abs(x))-1 )
 
 cfi800 <- bias.orig.mod$n800[8:14,]
 
 apply(cfi800,2,  function(x) which.min(abs(x))-1 )
+apply(cfi800,2,  function(x) which.max(abs(x)))
 
 
 ###high reliability
@@ -104,28 +108,33 @@ for(i in 1:length(means.high.mod)){
 
 rmsea200 <- bias.high.mod$n200[1:7,]
 
+apply(rmsea200,2,  function(x) which.max(abs(x)) )
 apply(rmsea200,2,  function(x) which.min(abs(x))-1 )
 
 rmsea500 <- bias.high.mod$n500[1:7,]
 
-apply(rmsea500,2,  function(x) which.max(abs(x))-1 )
+apply(rmsea500,2,  function(x) which.max(abs(x)) )
 
 apply(rmsea500,2,  function(x) which.min(abs(x))-1 )
 
 rmsea800 <- bias.high.mod$n800[1:7,]
+apply(rmsea800,2,  function(x) which.max(abs(x)) )
 
 apply(rmsea800,2,  function(x) which.min(abs(x))-1 )
 
 
 cfi200 <- bias.high.mod$n200[8:14,]
+apply(cfi200,2,  function(x) which.max(abs(x)) )
 
 apply(cfi200,2,  function(x) which.min(abs(x))-1 )
 
 cfi500 <- bias.high.mod$n500[8:14,]
 
+apply(cfi500,2,  function(x) which.max(abs(x)))
 apply(cfi500,2,  function(x) which.min(abs(x))-1 )
 
 cfi800 <- bias.high.mod$n800[8:14,]
+apply(cfi800,2,  function(x) which.max(abs(x)) )
 
 apply(cfi800,2,  function(x) which.min(abs(x))-1 )
 
