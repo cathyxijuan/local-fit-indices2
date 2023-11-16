@@ -33,31 +33,39 @@ bias.orig.mod
 
 
 rmsea200 <- bias.orig.mod$n200[1:7,]
+
 apply(rmsea200,2,  function(x) which.max(abs(x)) )
 apply(rmsea200,2,  function(x) which.min(abs(x))-1 )
 
 rmsea500 <- bias.orig.mod$n500[1:7,]
-apply(rmsea500,2,  function(x) which.min(abs(x))-1 )
+apply(rmsea500,2,  function(x) which.min(abs(x))-1)
 
 rmsea800 <- bias.orig.mod$n800[1:7,]
 apply(rmsea800,2,  function(x) which.min(abs(x))-1 )
 apply(rmsea800,2,  function(x) which.max(abs(x)) )
 
 
+
+
+
 srmr200 <- bias.orig.mod$n200[15:23,]
 
 apply(srmr200,2,  function(x) which.min(abs(x))-3 )
-apply(srmr200,2,  function(x) which.max(abs(x)) )
+apply(srmr200,2,  function(x) which.max(abs(x))-3 )
 
 srmr500 <- bias.orig.mod$n500[15:23,]
 
 apply(srmr500,2,  function(x) which.min(abs(x))-3 )
-apply(srmr500,2,  function(x) which.max(abs(x)) )
+apply(srmr500,2,  function(x) which.max(abs(x))-3 )
 
 srmr800 <- bias.orig.mod$n800[15:23,]
 
 apply(srmr800,2,  function(x) which.min(abs(x))-3 )
-apply(srmr800,2,  function(x) which.max(abs(x)) )
+apply(srmr800,2,  function(x) which.max(abs(x))-3 )
+
+
+
+
 
 cfi200 <- bias.orig.mod$n200[8:14,]
 apply(cfi200,2,  function(x) which.max(abs(x)) )
@@ -140,23 +148,24 @@ apply(cfi800,2,  function(x) which.min(abs(x))-1 )
 
 
 
+
+
+
 srmr200 <- bias.high.mod$n200[15:23,]
 
 apply(srmr200,2,  function(x) which.min(abs(x))-3 )
-apply(srmr200,2,  function(x) which.max(abs(x)) )
-which.min(abs(srmr200[,2]))
-str(srmr200)
-srmr200[,2]
+apply(srmr200,2,  function(x) which.max(abs(x))-3 )
+
 
 srmr500 <- bias.high.mod$n500[15:23,]
 
 apply(srmr500,2,  function(x) which.min(abs(x))-3 )
-apply(srmr500,2,  function(x) which.max(abs(x)) )
+apply(srmr500,2,  function(x) which.max(abs(x))-3 )
 
 srmr800 <- bias.high.mod$n800[15:23,]
 
 apply(srmr800,2,  function(x) which.min(abs(x))-3 )
-apply(srmr800,2,  function(x) which.max(abs(x)) )
+apply(srmr800,2,  function(x) which.max(abs(x))-3 )
 
 
 

@@ -2,8 +2,8 @@ source("models original.R")
 source("functions.R")
 
 
-n=400
-#set.seed(777)
+n=1000
+set.seed(777)
 simuData<- simulateData(pop.mod, sample.nobs=n)
 head(simuData)
 
@@ -27,15 +27,15 @@ struct.path <- c("eta1~~eta1","eta1~~eta2", "eta1~~eta3", "xi1~~eta1", "xi2~~eta
                  "xi1~~xi1" ,  "xi1~~xi2" ,  "xi1~~xi3",   "xi1~~xi4" ,  "xi2~~xi2" ,  "xi2~~xi3"  ,
                  "xi2~~xi4" ,  "xi3~~xi3" ,  "xi3~~xi4"  , "xi4~~xi4"  ) #the order of these names match the one for fit2 
 fit1@Options$h1.information = "structured" 
-W1.unstr.invert <- lavInspect(fit1, "inverted.information.observed")[struct.path, struct.path]
+W1.str.invert <- lavInspect(fit1, "inverted.information.expected")
 
 
-V1.unstr <- lavInspect(fit1, "information.first.order")[struct.path, struct.path]
-#Note: W1.unstr.invert and V1.unstr should be the similar under normal data
+V1.str <- lavInspect(fit1, "information.first.order")
+#Note: W1.str.invert and V1.str should be the similar under normal data
 
 #computing Gamma
-Gamma.tri <- W1.unstr.invert%*%V1.unstr%*%W1.unstr.invert
-Gamma <- W1.unstr.invert
+Gamma.tri <- (W1.str.invert%*%V1.str%*%W1.str.invert)[struct.path, struct.path]
+Gamma <- W1.str.invert[struct.path, struct.path]
 
 
 c.adj.val(fit2, Gamma.tri, structured=T, expected=T)

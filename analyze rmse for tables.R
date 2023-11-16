@@ -20,7 +20,7 @@ rmse.orig.mod <- list("n150"=rmse(fit.mod.orig.n150,pop.indices),
 
 rmsea <- rmse.orig.mod$n200[1:7, ]
 apply(rmsea,2,  function(x) which.min(abs(x))-1 )
-apply(rmsea,2,  function(x) which.max(abs(x)) )
+apply(rmsea,2,  function(x) which.max(abs(x))-1 )
 
 cfi <- rmse.orig.mod$n200[8:14, ]
 apply(cfi,2,  function(x) which.min(abs(x))-1 )
@@ -28,8 +28,8 @@ apply(cfi,2,  function(x) which.max(abs(x))-1 )
 
 
 srmr <- rmse.orig.mod$n200[15:nrow(rmse.orig.mod$n200), ]
-apply(srmr,2,  function(x) which.min(abs(x)) )
-apply(srmr,2,  function(x) which.max(abs(x)) )
+apply(srmr,2,  function(x) which.min(abs(x))-3 )
+apply(srmr,2,  function(x) which.max(abs(x)) -3)
 
 
 
@@ -54,11 +54,11 @@ rmse.high.mod <- list("n150"=rmse(fit.mod.high.n150,pop.indices),
 rmse.high.mod 
 rmsea <- rmse.high.mod$n200[1:7, ]
 apply(rmsea,2,  function(x) which.min(abs(x))-1 )
-apply(rmsea,2,  function(x) which.max(abs(x)) )
+apply(rmsea,2,  function(x) which.max(abs(x))-1 )
 
 cfi <- rmse.high.mod$n200[8:14, ]
 apply(cfi,2,  function(x) which.min(abs(x))-1 )
-apply(cfi,2,  function(x) which.max(abs(x)) )
+apply(cfi,2,  function(x) which.max(abs(x))-1 )
 
 
 srmr <- rmse.high.mod$n200[15:nrow(rmse.high.mod$n200), ]
@@ -66,6 +66,3 @@ apply(srmr,2,  function(x) which.min(abs(x))-3 )
 apply(srmr,2,  function(x) which.max(abs(x))-3 )
 
 
-
-0.9-0.03
-0.9+0.03
