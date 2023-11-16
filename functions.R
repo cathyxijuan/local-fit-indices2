@@ -617,10 +617,10 @@ simu.fit <- function(pop.model, sat.model, path.model.list, sample.size, rep.num
       } else{
         #compute gamma
         fit1@Options$h1.information = "structured" 
-        W1.str.invert <- lavInspect(fit1, "inverted.information.expected")[struct.path, struct.path]
-        V1.str <- lavInspect(fit1, "information.first.order")[struct.path, struct.path]
-        Gamma.tri <- W1.str.invert%*%V1.str%*%W1.str.invert
-        Gamma <- W1.str.invert
+        W1.str.invert <- lavInspect(fit1, "inverted.information.expected")
+        V1.str <- lavInspect(fit1, "information.first.order")
+        Gamma.tri <- (W1.str.invert%*%V1.str%*%W1.str.invert)[struct.path, struct.path]
+        Gamma <- W1.str.invert[struct.path, struct.path]
         
         
         
@@ -777,10 +777,10 @@ simu.component <- function(pop.model, sat.model, path.model.list, sample.size, r
       } else{
         #compute gamma
         fit1@Options$h1.information = "structured" 
-        W1.str.invert <- lavInspect(fit1, "inverted.information.expected")[struct.path, struct.path]
-        V1.str <- lavInspect(fit1, "information.first.order")[struct.path, struct.path]
-        Gamma.tri <- W1.str.invert%*%V1.str%*%W1.str.invert
-        Gamma <- W1.str.invert
+        W1.str.invert <- lavInspect(fit1, "inverted.information.expected")
+        V1.str <- lavInspect(fit1, "information.first.order")
+        Gamma.tri <- (W1.str.invert%*%V1.str%*%W1.str.invert)[struct.path, struct.path]
+        Gamma <- W1.str.invert[struct.path, struct.path]
         
         
         
@@ -877,10 +877,10 @@ simu.rmsea.ci <- function(pop.model, sat.model, path.model.list, sample.size, re
       } else{
         #compute gamma
         fit1@Options$h1.information = "structured" 
-        W1.str.invert <- lavInspect(fit1, "inverted.information.expected")[struct.path, struct.path]
-        V1.str <- lavInspect(fit1, "information.first.order")[struct.path, struct.path]
-        Gamma.tri <- W1.str.invert%*%V1.str%*%W1.str.invert
-        Gamma <- W1.str.invert
+        W1.str.invert <- lavInspect(fit1, "inverted.information.expected")
+        V1.str <- lavInspect(fit1, "information.first.order")
+        Gamma.tri <- (W1.str.invert%*%V1.str%*%W1.str.invert)[struct.path, struct.path]
+        Gamma <- W1.str.invert[struct.path, struct.path]
         
         
         
@@ -1001,10 +1001,10 @@ simu.srmr.ci <- function(pop.model, sat.model, path.model.list, sample.size, rep
       } else{
         #compute gamma
         fit1@Options$h1.information = "structured" 
-        W1.str.invert <- lavInspect(fit1, "inverted.information.expected")[struct.path, struct.path]
-        V1.str <- lavInspect(fit1, "information.first.order")[struct.path, struct.path]
-        Gamma.tri <- W1.str.invert%*%V1.str%*%W1.str.invert
-        Gamma <- W1.str.invert
+        W1.str.invert <- lavInspect(fit1, "inverted.information.expected")
+        V1.str <- lavInspect(fit1, "information.first.order")
+        Gamma.tri <- (W1.str.invert%*%V1.str%*%W1.str.invert)[struct.path, struct.path]
+        Gamma <- W1.str.invert[struct.path, struct.path]
         
         
         
@@ -1092,10 +1092,10 @@ simu.srmr.ci.check.val <- function(pop.model, sat.model, path.model.list, sample
       } else{
         #compute gamma
         fit1@Options$h1.information = "structured" 
-        W1.str.invert <- lavInspect(fit1, "inverted.information.expected")[struct.path, struct.path]
-        V1.str <- lavInspect(fit1, "information.first.order")[struct.path, struct.path]
-        Gamma.tri <- W1.str.invert%*%V1.str%*%W1.str.invert
-        Gamma <- W1.str.invert
+        W1.str.invert <- lavInspect(fit1, "inverted.information.expected")
+        V1.str <- lavInspect(fit1, "information.first.order")
+        Gamma.tri <- (W1.str.invert%*%V1.str%*%W1.str.invert)[struct.path, struct.path]
+        Gamma <- W1.str.invert[struct.path, struct.path]
         
         
         
@@ -1183,10 +1183,10 @@ simu.cfi.ci <- function(pop.model, sat.model, path.model.list, sample.size, rep.
       } else{
         #compute gamma
         fit1@Options$h1.information = "structured" 
-        W1.str.invert <- lavInspect(fit1, "inverted.information.expected")[struct.path, struct.path]
-        V1.str <- lavInspect(fit1, "information.first.order")[struct.path, struct.path]
-        Gamma.tri <- W1.str.invert%*%V1.str%*%W1.str.invert
-        Gamma <- W1.str.invert
+        W1.str.invert <- lavInspect(fit1, "inverted.information.expected")
+        V1.str <- lavInspect(fit1, "information.first.order")
+        Gamma.tri <- (W1.str.invert%*%V1.str%*%W1.str.invert)[struct.path, struct.path]
+        Gamma <- W1.str.invert[struct.path, struct.path]
         
         
         

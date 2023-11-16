@@ -52,3 +52,4 @@ rmsea.ci.mod.high.n1000 <- simu.rmsea.ci(pop.mod, sat.struct, path.mod.list,
                                          sample.size=1000, rep.num=5000)
 
 save(rmsea.ci.mod.high.n1000, file="rmsea.ci.mod.high.n1000.RData")
+
